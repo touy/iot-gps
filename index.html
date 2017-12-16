@@ -1,0 +1,324 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="public/css/bootstrap-3.3.7-dist/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="public/css/bootstrap-3.3.7-dist/bootstrap-3.3.7-dist/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="public/js/jquery-ui-1.12.1/jquery-ui-1.12.1/jquery-ui.min.css">
+        <link rel="stylesheet" href="public/js/jquery-ui-1.12.1/jquery-ui-1.12.1/jquery-ui.structure.min.css">
+        <link rel="stylesheet" href="public/js/jquery-ui-1.12.1/jquery-ui-1.12.1/jquery-ui.theme.min.css">
+        <link rel="stylesheet" href="public/js/bootstrap-datetimepicker-master/css/bootstrap-datetimepicker.min.css">
+        <style>
+            #heading { font-size: x-large; font-weight: bold; }
+            .text { width: 99%; height: 200px; }
+            .small { font-size: small; }
+        </style>        
+        <script src="public/js/jquery-1.12.4.min.js"></script>
+        <script src="public/js/jquery-ui-1.12.1/jquery-ui-1.12.1/jquery-ui.min.js"></script>
+        <script src="public/js/bootstrap-datetimepicker-master/js/bootstrap-datetimepicker.min.js"></script>
+        <script>
+function CSVToArray(strData, strDelimiter) {
+    // Check to see if the delimiter is defined. If not,
+    // then default to comma.
+    strDelimiter = (strDelimiter || "\t");
+    // Create a regular expression to parse the CSV values.
+    var objPattern = new RegExp((
+    // Delimiters.
+    "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+    // Quoted fields.
+    "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+    // Standard fields.
+    "([^\"\\" + strDelimiter + "\\r\\n]*))"), "gi");
+    // Create an array to hold our data. Give the array
+    // a default empty first row.
+    var arrData = [[]];
+    // Create an array to hold our individual pattern
+    // matching groups.
+    var arrMatches = null;
+    // Keep looping over the regular expression matches
+    // until we can no longer find a match.
+    while (arrMatches = objPattern.exec(strData)) {
+        // Get the delimiter that was found.
+        var strMatchedDelimiter = arrMatches[1];
+        // Check to see if the given delimiter has a length
+        // (is not the start of string) and if it matches
+        // field delimiter. If id does not, then we know
+        // that this delimiter is a row delimiter.
+        if (strMatchedDelimiter.length && (strMatchedDelimiter != strDelimiter)) {
+            // Since we have reached a new row of data,
+            // add an empty row to our data array.
+            arrData.push([]);
+        }
+        // Now that we have our delimiter out of the way,
+        // let's check to see which kind of value we
+        // captured (quoted or unquoted).
+        if (arrMatches[2]) {
+            // We found a quoted value. When we capture
+            // this value, unescape any double quotes.
+            var strMatchedValue = arrMatches[2].replace(
+            new RegExp("\"\"", "g"), "\"");
+        } else {
+            // We found a non-quoted value.
+            var strMatchedValue = arrMatches[3];
+        }
+        // Now that we have our value string, let's add
+        // it to the data array.
+        arrData[arrData.length - 1].push(strMatchedValue);
+    }
+    // Return the parsed data.
+    return (arrData);
+}
+
+function CSV2JSON(csv) {
+    var array = CSVToArray(csv);
+    var objArray = [];
+    for (var i = 1; i < array.length; i++) {
+        objArray[i - 1] = {};
+        for (var k = 0; k < array[0].length && k < array[i].length; k++) {
+            var key = array[0][k];
+            objArray[i - 1][key] = array[i][k]
+        }
+    }
+
+    var json = JSON.stringify(objArray);
+    var str = json.replace(/},/g, "},\r\n");
+
+    return str;
+}
+function jsonPost(url, data, cb) {
+            //console.log(data);
+            $.ajax({
+                type: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                dataType: "json",
+                url: url,
+                success: cb
+            });
+        }
+function getHost() {
+    host = $(location).attr('protocol') + "//" + $(location).attr('host')+$(location).attr('pathname');
+    //host =host.replace("/tree","");
+    console.log(host)
+    return host;
+}
+function tabshows(t){
+    $("#"+t).show();
+    var d=$('#tabs').find('div');
+    for (index = 0; index < d.length; index++) {
+        const element = d[index];
+        if(t!=element.id){            
+            $("#"+element.id).hide();            
+        }
+    }
+}
+$(document).ready(function() {
+    var client={};
+    client.data={};
+    $("#bconvert").click(function() {
+        var csv = $("#tcsv").val();
+        console.log(csv);
+        var json = CSV2JSON(csv);
+        $("#tjson").val(json);
+    });
+    $('#bsave').click(()=>{
+        var json=$("#tjson").val();
+        //import to database
+        client.data.refillnumbers=json;
+        jsonPost('/import_refill_numbers',client,(res)=>{
+            console.log('import '+res);
+            alert('imported '+res);
+        });
+    });
+    $("#updatetime").datetimepicker({format: 'yyyy-mm-dd hh:ii'});
+    $("#bnewitem").click(function(){
+        var c=$("#trefilldetails").find('.form-control');
+        for (var index = 0; index < c.length; index++) {
+            var element = c[index];
+            $('#'+element.id).val('');
+           // console.log($('#'+element.id).val(''));
+        }
+    });
+    $("#bupdate").click(function(){
+        var c=$("#refilldetails").find('.form-control');
+        var arr=[];
+        for (var index = 0; index < c.length; index++) {
+            var element = c[index];            
+            arr.push(element.id);
+        }
+        var json="{";
+        for (var prop in obj) {            
+            json+='"'+prop+'":"'+obj[prop]+'",';
+        }
+        json=json.slice(0,json.length-1);
+        json+="}";
+        json=JSON.parse(json);
+        var client={};
+        client.data={};
+        client.data.refillnumbers=json;
+        jsonPost('/update_refill_numbers',client,(res)=>{
+            console.log('update '+res);
+            alert('updated '+res);
+        });
+            
+    });
+    $("#bcenacel").click(function(){
+        // back to previous page
+    });    
+    $("#bcenacel").click(function(){
+        // back to previous page
+    });
+    //bind details 
+    function selectItem(gui){
+        tabshows("trefilldetails");
+        var url='/view_refill_numbers_details';
+        client.data.page=0;
+        client.data.maxpage=20;
+        jsonPost(url,client,function(res){ 
+            var c=$("#trefilldetails").find('.form-control');
+            for (var index = 0; index < c.length; index++) {
+                var element = c[index];
+                for(var e in res){
+                    if(e==element.id)
+                    $('#'+element.id).val(res[e]);
+                }
+            }    
+        });
+    }
+    //show list
+    $("#brefilllist").click(function(){
+        tabshows("trefilllist");
+        var url='/display_refill_numbers';
+        client.data.page=0;
+        client.data.maxpage=20;
+        jsonPost(url,client,function(res){
+            client.data.refillnumbers=res.arr;
+            client.data.refillnumberscount=res.count;
+            var html='<div class="row">';
+            for (let index = 0; index < client.data.refillnumbers.length; index++) {
+                const element = array[index];
+                html+="<div class='col-sm-4' id='"+element.gui+"' onclick='selectItem('"+element.gui+"') >"+element.username+"|"+element.device+"|"+element.imei+"|"+element.phone+"|"+element.expire;
+                html+="<input type='radio' value='"+element.isrnew+"'/> </div>";
+            }
+            html+="</div>";
+            $('#trefilllist').append(html);
+        });
+    }); 
+    $(document).on('click',"#beditdevice",function(event){
+        tabshows("trefilldetails");
+        var c=$("#trefilldetails").find('.form-control');
+        for (var index = 0; index < c.length; index++) {
+            var element = c[index];
+            $('#'+element.id).val('');
+           // console.log($('#'+element.id).val(''));
+        }
+    }); 
+    $("#bimport").click(function(){
+        tabshows("timportrefilllist");
+    }); 
+    $("#bretry").click(function(){
+        tabshows("tretrylist");
+        //show retry list
+    }); 
+    $("#bsuccess").click(function(){
+        tabshows("tsuccesslist");
+        //show success list
+    }); 
+    $("#bfailed").click(function(){
+        tabshows("tfailedlist");
+        //show failed list
+    }); 
+});
+        </script>
+    </head>
+    <body>
+        
+        <div id='menu'>
+            <button id='brefilllist'>Refill list</button>
+            <button id='beditdevice'>edit device</button>
+            <button id='bimport'>import</button>
+            <button id='bretry'>retry list</button>
+            <button id='bsuccess'>success list</button>
+            <button id='bfailed'>failed list</button>
+            <button id='btopup'>top up</button>
+            <input type="text" id='directphone' /><input type='text' id='topupvalue' />
+            <button id='bdirecttopup'>direct topup</button>
+        </div>
+        <div id='tabs'>
+        <div id='trefilllist'></div>
+        <div id='trefilldetails' class="col-xs-2 input-sm" style="display:none">
+            <input type="hidden" class="form-control" id='gui' />
+            <input type="hidden" class="form-control" id='_rev' />
+            <div class="form-group">
+                <label for="user">user:</label>
+                <input type="text" class="form-control" id='user' />
+            </div>
+            <div class="form-group">
+                <label for="imei">imei:</label>
+                <input type="text" class="form-control" id='imei' />
+            </div>
+            <div class="form-group">
+                <label for="phone">phone:</label>
+                <input type="text" class="form-control" id='phone' />
+            </div>
+            <div class="form-group">
+                <label for="model">model:</label>
+                <input type="text" class="form-control" id='model' />
+            </div>
+            <div class="form-group">
+                <label for="device">device name:</label>
+                <input type="text" class="form-control" id='device' />
+            </div>
+            <div class="form-group">
+                <label for="expire">expire:</label>
+                <input type="text" class="form-control" id='expire' />
+            </div>
+            <div class="form-group">
+                <label for="startdate">start:</label>
+                <input type="text" class="form-control" id='startdate' />
+            </div> 
+            <div class="form-group">
+                <label for="updatetime">updated time:</label>
+                <input  class="form-control" type="text"  readonly id="updatetime" />
+            </div>
+            <div class="form-group">
+                <label for="usertel">user tel:</label>
+                <input type="text" class="form-control" id='usertel' />
+            </div>
+            <div class="form-group">
+                <label for="isrenew" class="radio">is renew
+                    <input type="radio" class="form-control" id='isrenew' /></label>
+                
+            </div>
+            <div class="form-group">
+                <label for="remark">remark:</label>
+                <textarea id="remark" class="form-control"></textarea>
+            </div>
+            <div class="form-group">
+                <button id='bnewitem' class="btn btn-default">new</button>
+                <button id='bupdate' class="btn btn-default">update</button>
+                <button id='bcancel' class="btn btn-default">cancel</button>
+            </div>            
+        </div>
+        <div id='timportrefilllist'>
+            <table>
+                <tr>
+                    <th>CSV</th>
+                    <th>JSON</th>
+                </tr>
+                <tr>
+                    <td><textarea class="text" id='tcsv'></textarea></td>
+                    <td><textarea class="text" id='tjson'></textarea></td>
+                </tr>
+            </table>
+            <div>
+                <button id='bconvert'>covert</button>
+            <button id='bsave'>save</button>
+            </div>
+        </div>
+        <div id='tretrylist' style="display:none"></div>
+        <div id='tsuccesslist' style="display:none"></div>
+        <div id='tfailedlist' style="display:none"></div>
+        </div>
+
+
+    </body>
+</html>
