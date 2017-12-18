@@ -102,35 +102,51 @@ function errorHandler(err, req, res, next) {
 var __design_refillnumbers = {
     "_id": "_design/objectList",
     "views": {
-        "findAll": {
-            "map": "function (doc) {\n  emit(null,doc);\n}"
-        },
-        "findCount": {
-            "reduce": "_count",
-            "map": "function (doc) {\n  emit(1);\n}"
-        },
-        "findCountBy": {
-            "reduce": "_count",
-            "map": "function (doc) { emit([0,doc.isrenew,doc.updatedtime],doc);"+
-                "emit([1,doc.imei,doc.isrenew,doc.updatedtime],doc);"+
-                "emit([2,doc.phone,doc.isrenew,doc.updatedtime],doc);"+
-               " emit([3,doc.username,doc.isrenew,doc.updatedtime],doc);"+
-               " emit([4,doc.expire],doc);"+
-               " emit([5,doc.gui],doc);"+
-              "}"
-        },
         "findBy": {
-            "map": "function (doc) { emit([0,doc.isrenew,doc.updatedtime],doc);"+
-            "emit([1,doc.imei,doc.isrenew,doc.updatedtime],doc);"+
-            "emit([2,doc.phone,doc.isrenew,doc.updatedtime],doc);"+
-           " emit([3,doc.username,doc.isrenew,doc.updatedtime],doc);"+
-           " emit([4,doc.expire],doc);"+
-           " emit([5,doc.gui],doc);"+
-          "}"
-        },      
+            "reduce": "_count",
+            "map": "function (doc) {"+
+            "for(prop in doc){"+
+            "var prefix = doc[prop];"+
+            "emit([0,doc.updatedtime,doc.isrenew],doc);"+
+            "emit([1,doc.updatedtime],doc);"+
+            "emit([2,prop,prefix],doc);"+
+          "}}"
+        },
+          "searchBy": {
+            "reduce": "_count",
+            "map": "function (doc) {\r\n  for(prop in doc){\r\n    var prefix = doc[prop];\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prop,prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }\r\n}"
+          }, 
+        "searchText": {
+            "reduce": "_count",
+          "map": "function (doc) {\r\n  var prefix;\r\n  for(prop in doc){\r\n    if(prop==\"_id\"||prop==\"_rev\"||prop==\"gui\")\r\n    continue;\r\n    if(!Date.parse(doc[prop]))\r\n         prefix += doc[prop];\r\n    else if(!isNAN(doc[prop]))\r\n        prefix += doc[prop];\r\n  }\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }"
+        }
     },
     "language": "javascript"
 };
+var __design_event_list={
+    "_id": "_design/objectList",
+    "views": {
+        "findBy": {
+            "reduce": "_count",
+            "map": "function (doc) {"+
+            "for(prop in doc){"+
+            "var prefix = doc[prop];"+
+            "emit([0,prop,prefix,doc.updatedtime,doc.isrenew],doc);"+
+            "emit([1,prop,prefix,doc.updatedtime],doc);"+
+           " emit([2,prop,prefix],doc);"+
+          "}}"
+        },
+          "searchBy": {
+            "reduce": "_count",
+            "map": "function (doc) {\r\n  for(prop in doc){\r\n    var prefix = doc[prop];\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prop,prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }\r\n}"
+          }, 
+        "searchText": {
+            "reduce": "_count",
+          "map": "function (doc) {\r\n  var prefix;\r\n  for(prop in doc){\r\n    if(prop==\"_id\"||prop==\"_rev\"||prop==\"gui\"||typeof(doc[prop]===\"boolean\"))\r\n    continue;\r\n    if(!Date.parse(doc[prop]))\r\n         prefix += doc[prop];\r\n    else if(!isNAN(doc[prop]))\r\n        prefix += doc[prop];\r\n  }\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }"
+        }
+    },
+    "language": "javascript"
+}
 function create_db(dbname) {
     var db;
     nano.db.create(dbname, function (err, body) {
@@ -184,9 +200,9 @@ function init_db(dbname, design) {
     //return db;
   }
 init_db('refillnumbers', __design_refillnumbers);
-init_db('successlist', __design_list);
-init_db('failedlist', __design_list);
-init_db('retrylist', __design_list);
+init_db('successlist', __design_event_list);
+init_db('failedlist', __design_event_list);
+init_db('retrylist', __design_event_list);
 
 const requestIp = require('request-ip');
 
@@ -205,23 +221,6 @@ var ltc = require("./ltctopup")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=', 
 app.all('/',(req,res)=>{
     res.sendFile(__dirname+"/index.html");
 });
-app.all('/git_pull',(req,res)=>{
-    var exec = require('child_process').exec;
-    var child = exec('git pull origin master',
-      function (error, stdout, stderr){
-        var newlines=/[\r\n]+/;
-        var lines=stdout.split(newlines)
-        //console.log(lines[2]);
-        if(error !== null){
-          console.log("Error -> "+error);
-            res.send(error);
-        }
-        else
-            res.send(lines);
-        //ltcDecrypt(lines[2]);
-    });
-});
-
 
 app.all('/show_refill_numbers',(req,res)=>{
     var js={};
@@ -230,7 +229,7 @@ app.all('/show_refill_numbers',(req,res)=>{
     showRefillNumbers(js);
 });
 function showRefillNumbers(js){
-    var by=js.client.data.by;
+    //var by=js.client.data.by;
     var isrenew=client.data.isrenew;
     var startime=client.data.startime;
     var endtime=client.data.endtime;
@@ -251,16 +250,16 @@ function showRefillNumbers(js){
         js.resp.send(js.client);
     });
 }
-function queryFieldsRefillNumbers(type,by,isrenew,starttim,endtime,iscount,page,maxpage){
+function queryFieldsRefillNumbers(type,prop,by,isrenew,starttime,endtime,iscount,page,maxpage){
     var deferred=Q.defer();
     var db=create_db('refillnumbers');
-    var viewname='findCountBy';
-    if(!iscount){
-        viewname='findBy';
-    }
-    if(type==4){
-        if(iscount)
-        db.view(__design_view,viewname,{startkey:[type,"\u9999"],endkey:[type,""],descending:true},(err,res)=>{
+          //0,time,renew
+          //1,time
+          //2,prop,prefix
+    if(type==0){
+        db.view(__design_view,"findBy",{
+            startkey:[type,endtime,isrenew],
+            endkey:[type,starttime,isrenew],descending:true,reduce:iscount,skip:page,limit:maxpage},(err,res)=>{
             if(err)deferred.reject(err);
             else{
                 var arr=[];
@@ -276,8 +275,10 @@ function queryFieldsRefillNumbers(type,by,isrenew,starttim,endtime,iscount,page,
                 else deferred.resolve(arr);
             }
         });   
-        else
-        db.view(__design_view,viewname,{startkey:[type,"\u9999"],endkey:[type,""],descending:true,skip:page,limit:maxpage},(err,res)=>{
+    }
+    else if(type==1){
+        db.view(__design_view,"findBy",{
+            startkey:[endtime],endkey:[starttime],descending:true,reduce:iscount,skip:page,limit:maxpage},(err,res)=>{
             if(err)deferred.reject(err);
             else{
                 var arr=[];
@@ -292,81 +293,29 @@ function queryFieldsRefillNumbers(type,by,isrenew,starttim,endtime,iscount,page,
                     deferred.resolve(arr[0]);
                 else deferred.resolve(arr);
             }
-        });
+        });   
+
+    }else if(type==2){
+        db.view(__design_view,"findBy",{
+            key:[type,prop,prefix],reduce:iscount,skip:page,limit:maxpage},(err,res)=>{
+            if(err)deferred.reject(err);
+            else{
+                var arr=[];
+                var array=res.rows;
+                if(res.rows.length){
+                    for (let index = 0; index < array.length; index++) {
+                        const element = array[index].value;
+                        arr.push(element);
+                    }
+                }
+                if(iscount)
+                    deferred.resolve(arr[0]);
+                else deferred.resolve(arr);
+            }
+        });  
     }
-    else if(type==0){
-        if(iscount)
-        db.view(__design_view,viewname,{startkey:[type,isrenew,starttime],endkey:[type,isrenew,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                var array=res.rows;
-                if(res.rows.length){
-                    for (let index = 0; index < array.length; index++) {
-                        const element = array[index].value;
-                        arr.push(element);
-                    }
-                }
-                if(iscount)
-                deferred.resolve(arr[0]);
-                else deferred.resolve(arr);
-            }
-        });
-        else
-        db.view(__design_view,viewname,{startkey:[type,isrenew,starttime],endkey:[type,isrenew,endtime],skip:page,limit:maxpage},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                var array=res.rows;
-                if(res.rows.length){
-                    for (let index = 0; index < array.length; index++) {
-                        const element = array[index].value;
-                        arr.push(element);
-                    }
-                }
-                if(iscount)
-                deferred.resolve(arr[0]);
-                else deferred.resolve(arr);
-            }
-        });
-    }
-    else {
-        if(iscount)
-        db.view(__design_view,viewname,{startkey:[type,by,isrenew,starttime],endkey:[type,by,isrenew,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                var array=res.rows;
-                if(res.rows.length){
-                    for (let index = 0; index < array.length; index++) {
-                        const element = array[index].value;
-                        arr.push(element);
-                    }
-                }
-                if(iscount)
-                deferred.resolve(arr[0]);
-                else deferred.resolve(arr);
-                
-            }
-        });
-        else
-        db.view(__design_view,viewname,{startkey:[type,by,isrenew,starttime],endkey:[type,by,isrenew,endtime],skip:page,limit:maxpage},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                var array=res.rows;
-                if(res.rows.length){
-                    for (let index = 0; index < array.length; index++) {
-                        const element = array[index].value;
-                        arr.push(element);
-                    }
-                }
-                if(iscount)
-                deferred.resolve(arr[0]);
-                else deferred.resolve(arr);
-                
-            }
-        });
+    else{
+        deferred.reject(new Error('Type is not correct'));
     }
     return deferred.promise;
 }
@@ -374,90 +323,56 @@ function getRefillNumbers(by,isrenew,starttime,endtime,iscount,page,maxpage){
     var deferred=Q.defer();
     var db=create_db('refillnumbers');
     var type=0;
-    //process by
-    var arr=by.split(/(?:,;-| )+/);
-    var imei='';var phone='';var username='';
-    if(!by||by==undefined||!by.length){
+    var prop='gui';//search by gui only
+    if(starttime&&endtime&&isrenew!='')
         type=0;
-        if(isrenew=='')
-            type=4          
-    }    
-    else{
-        if(arr.length){// arr should be 1
-            for (let index = 0; index < arr.length; index++) {
-                const element = arr[index];  
-                if(!isNaN(element)){
-                    if(element.length>10){
-                        type=1
-                        by=element;//emei
-                    }                
-                    else{
-                        type=3
-                        by=element;//phone
-                    }
-                }   
-                else{
-                    type=2
-                    by=element;//username
-                }        
-            }
-        }      
+    else if(starttime&&endtime)
+        type=1;
+    else if(by){
+        type=2;
     }
     switch (type) {
-        case 0:
-            queryFieldsRefillNumbers(type,by,isrenew,starttime,endtime,iscount,page,maxpage).then((res)=>{
+        case 0://time,renew
+            queryFieldsRefillNumbers(type,prop,by,isrenew,starttime,endtime,iscount,page,maxpage).then((res)=>{
                 deferred.resolve(res);
             }).catch(err=>{
                 deferred.reject(err);
             });
             break;
-        case 1://by=[IMEI]
-            queryFieldsRefillNumbers(type, by, isrenew, starttime, endtime, iscount,page,maxpage).then((res)=>{
+        case 1://time
+            queryFieldsRefillNumbers(type,prop, by, isrenew, starttime, endtime, iscount,page,maxpage).then((res)=>{
                 deferred.resolve(res);
             }).catch(err=>{
                 deferred.reject(err);
             });;
             break;
-        case 2://by=[username]
-            queryFieldsRefillNumbers(type, by, isrenew, starttime, endtime, iscount,page,maxpage).then((res)=>{
+        case 2://prop,prefix
+            queryFieldsRefillNumbers(type,prop, by, isrenew, starttime, endtime, iscount,page,maxpage).then((res)=>{
                 deferred.resolve(res);
             }).catch(err=>{
                 deferred.reject(err);
             });;
-            break;
-        case 3://by=phone , type =3 
-            queryFieldsRefillNumbers(type, by, isrenew, starttime, endtime, iscount,page,maxpage).then((res)=>{
-                deferred.resolve(res);
-            }).catch(err=>{
-                deferred.reject(err);
-            });;
-            break;
-        case 4://isrenew='' , type=4 , by='', startime ='', endtime=''
-            queryFieldsRefillNumbers(type, by, isrenew, starttime, endtime, iscount,page,maxpage).then((res)=>{
-                deferred.resolve(res);
-            }).catch(err=>{
-                deferred.reject(err);
-            });
             break;        
     }
     return deferred.promise;
 }
-app.all('/display_refill_numbers',(req,res)=>{
+
+app.all('/select_refill_numbers',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
-    displayRefillNumbers(js);
+    selectRefillNumbers(js);
 });
-function displayRefillNumbers(js){
-    //var by=js.client.data.by;
+function selectRefillNumbers(js){
+    var by=js.client.data.by;
     //var isrenew=client.data.isrenew;
     // var startime=client.data.startime;
     // var endtime=client.data.endtime;
-    var page=client.data.page;
-    var maxpage=client.data.maxpage;
-    getRefillNumbers('','','','',true,page,maxpage).then(res=>{
+    // var page=client.data.page;
+    // var maxpage=client.data.maxpage;
+    getRefillNumbers(by,'','','',true,0,1).then(res=>{
         var count=res;
-            getRefillNumbers('','','','',false,page,maxpage).then(res=>{
+            getRefillNumbers(by,'','','',false,0,1).then(res=>{
                 js.client.data.message="OK";
                 js.client.data.refillnumbers={arr:res,count:count};
                 js.resp.send(js.client);
@@ -473,40 +388,50 @@ app.all('/search_refill_numbers',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
-    searchRefillNumbers(js);
+    searchRefillNumbers2(js);
 });
-
-function searchRefillNumbers(js){
-    var options = {
-        'content-type': 'application/json',
-        url: 'http://localhost:5984/refillnumbers/_find',
-        body:'',
-      };
-    var kw=js.client.data.kw;
-    var skw ='username';
-    if(kw){
-        if(!isNaN(kw)){
-            if(kw.length>10)
-                skw='imei';
-            else
-                skw="phone";
-        }
-    }
-    options.body={"selector": {
-        skw: {"$regex": kw}
-                            }
-    };
-    request(options, (error, response, body)=> {
-        if (!error && response.statusCode == 200) {
-          js.client.data.refillnumbers=body
-          js.client.data.message='OK';
-          js.resp.send(js.client);
-        }
+function querySearch(by,iscount,page,maxpage){
+    var deferred=Q.defer();
+    var db=create_db('refillnumbers');
+    db.view(__design_view,"searchText",{
+        startkey:[by],
+        endkey:[by+"\u9999"],descending:true,reduce:iscount,skip:page,limit:maxpage},(err,res)=>{
+        if(err)deferred.reject(err);
         else{
-            js.client.data.message=error;
-            js.resp.send(js.client);
+            var arr=[];
+            var array=res.rows;
+            if(res.rows.length){
+                for (let index = 0; index < array.length; index++) {
+                    const element = array[index].value;
+                    arr.push(element);
+                }
+            }
+            if(iscount)
+                deferred.resolve(arr[0]);
+            else deferred.resolve(arr);
         }
-      });
+    }); 
+    return deferred.promise;
+}
+function searchRefillNumbers2(js){
+    var by=js.client.data.by;
+    var page=client.data.page;
+    var maxpage=client.data.maxpage;
+    querySearch(by,true,page,maxpage).then(res=>{
+        var count=res;
+        querySearch(by,false,page,maxpage).then(res=>{
+            js.client.data.message="OK";
+            js.client.data.refillnumbers={arr:res,count:count};
+            js.resp.send(js.client);
+        }).catch(err=>{
+            throw err;
+        });
+    }).catch(err=>{
+        js.client.data.message=err;
+        js.resp.send(js.client);
+    });
+    
+
 }
 
 app.all('/import_refill_numbers',(req,res)=>{
@@ -541,38 +466,7 @@ function importRefillNumbersJson(objs){
     })
     return deferred.promise;
 }
-app.all('/view_refill_numbers_details',(req,res)=>{
-    var js={};
-    js.client=req.body;
-    js.resp=res;
-    viewRefillNumber(js);
-});
-function viewRefillNumber(js){
-    var gui=js.client.data.gui;
-    viewRefillNumberDetails(gui).then(res=>{
-        js.client.data.message='OK';
-        js.client.data.refillnumbers=res;
-        js.resp.send(js.client);
-    }).catch(err=>{
-        js.client.data.message=err;
-        js.resp.send(js.client);
-    });
-}
-function viewRefillNumberDetails(gui){
-    var deferred=Q.defer();
-    var db=create_db('refillnumbers');
-    db.view(__design_view,'findBy',{key:[5,gui]},function(err,res){
-        if(err)deferred.reject(err);
-        else{
-            var arr=[];
-            if(res.rows.length){
-                arr.push(res.rows[0].value);
-            }
-            deferred.resolve(arr);
-        }
-    });
-    return deferred.promise;
-}
+
 
 app.all('/update_refill_numbers',(req,res)=>{
     var js={};
@@ -640,8 +534,8 @@ app.all('/display_success_list',(req,res)=>{
 function displaySuccessList(js){
     var by=js.client.data.by;
     var type='phone';
-    var startime=convert(new Date(js.client.data.startime));
-    var endtime=convert(new Date(js.client.data.endtime));
+    var startime=convertTZ(new Date(js.client.data.startime));
+    var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
     var maxpage=js.client.data.maxpage;
     if(by){
@@ -674,8 +568,8 @@ app.all('/display_retry_list',(req,res)=>{
 function displayRetryList(js){
     var by=js.client.data.by;
     var type='phone';
-    var startime=convert(new Date(js.client.data.startime));
-    var endtime=convert(new Date(js.client.data.endtime));
+    var startime=convertTZ(new Date(js.client.data.startime));
+    var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
     var maxpage=js.client.data.maxpage;
     if(by){
@@ -708,8 +602,8 @@ app.all('/display_failed_list',(req,res)=>{
 function displayFailedList(js){
     var by=js.client.data.by;
     var type='phone';
-    var startime=convert(new Date(js.client.data.startime));
-    var endtime=convert(new Date(js.client.data.endtime));
+    var startime=convertTZ(new Date(js.client.data.startime));
+    var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
     var maxpage=js.client.data.maxpage;
     if(by){
@@ -767,9 +661,14 @@ app.all('/show_phone_balance',(req,res)=>{
     js.client=req.body;
     js.resp=res;
     ltc.checkPhoneBalance(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
-        js.client.data.phonebalance=res;
-        js.client.data.message='OK';
-        js.resp.send(js.client);
+        ltc.viewPhoneBalance(js.client.data.phone,js.client.data.startime,js.client.data.endtime,page,maxpage).the(res=>{
+            js.client.data.message='OK';
+            js.client.data.phonebalance=res;
+            js.resp.send(js.client);
+        }).catch(err=>{
+            throw err;
+        });
+
     }).catch((err)=>{
         js.client.data.message=err;
         js.resp.send(js.client);

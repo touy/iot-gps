@@ -169,7 +169,7 @@ $(document).ready(function() {
     //bind details 
     function selectItem(gui){
         tabshows("trefilldetails");
-        var url='/view_refill_numbers_details';
+        var url='/select_refill_numbers';
         client.data.page=0;
         client.data.maxpage=20;
         jsonPost(url,client,function(res){ 
@@ -186,7 +186,7 @@ $(document).ready(function() {
     //show list
     $("#brefilllist").click(function(){
         tabshows("trefilllist");
-        var url='/display_refill_numbers';
+        var url='/show_refill_numbers';
         client.data.page=0;
         client.data.maxpage=20;
         jsonPost(url,client,function(res){
@@ -195,13 +195,28 @@ $(document).ready(function() {
             var html='<div class="row">';
             for (let index = 0; index < client.data.refillnumbers.length; index++) {
                 const element = array[index];
-                html+="<div class='col-sm-4' id='"+element.gui+"' onclick='selectItem('"+element.gui+"') >"+element.username+"|"+element.device+"|"+element.imei+"|"+element.phone+"|"+element.expire;
-                html+="<input type='radio' value='"+element.isrnew+"'/> </div>";
+                html+="<input type='checkbox' id='c"+element.gui+"' checked /> </div>";
+                html+="<div class='col-sm-4' id='"+element.gui+"' onclick='selectItem('"+element.gui+"') >"+element.username+"|"+element.device+"|"+element.imei+"|"+element.phone+"|"+element.model+"|"+element.expire;
+                html+="<input type='checkbox'  "+((element.isrenew)?"checked":"")+"/> </div>";
             }
             html+="</div>";
             $('#trefilllist').append(html);
         });
     }); 
+    
+    $( "#tags" ).autocomplete({
+      source: ()=>{
+        var url='/search_refill_numbers';
+        client.data.by=$("#tags").val();
+        client.data.page=0;
+        client.data.maxpage=50;
+        jsonPost(url,client,function(res){
+            client.data.refillnumbers=res.arr;
+            client.data.refillnumberscount=res.count;
+            
+        });
+      }
+    });
     $(document).on('click',"#beditdevice",function(event){
         tabshows("trefilldetails");
         var c=$("#trefilldetails").find('.form-control');
@@ -239,10 +254,10 @@ $(document).ready(function() {
             <button id='bsuccess'>success list</button>
             <button id='bfailed'>failed list</button>
             <button id='btopup'>top up</button>
-            <input type="text" id='directphone' /><input type='text' id='topupvalue' />
             <button id='bdirecttopup'>direct topup</button>
         </div>
         <div id='tabs'>
+            <label for="tags">Search:</label><input type="text" id="tags"/>
         <div id='trefilllist'></div>
         <div id='trefilldetails' class="col-xs-2 input-sm" style="display:none">
             <input type="hidden" class="form-control" id='gui' />
@@ -317,6 +332,10 @@ $(document).ready(function() {
         <div id='tretrylist' style="display:none"></div>
         <div id='tsuccesslist' style="display:none"></div>
         <div id='tfailedlist' style="display:none"></div>
+        <div id='tdirecttopup' style="display: none">
+                <input type="text" id='directphone' /><input type='text' id='topupvalue' />
+        </div>
+
         </div>
 
 
