@@ -193,6 +193,7 @@ $(document).ready(function() {
     $("#brefilllist").click(function(){
         tabshows("trefilllist");
         var url='/show_refill_numbers';
+        client.data.by='';
         client.data.page=0;
         client.data.maxpage=20;
         jsonPost(url,client,function(res){

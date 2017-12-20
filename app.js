@@ -539,14 +539,14 @@ function showSuccessList(js){
     var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
     var maxpage=js.client.data.maxpage;
-        ltc.showSuccessList(by, starttime, endtime, page, maxpage).then((res)=>{
-            js.client.data.message='OK';
-            js.client.data.retrylist=res;
-            js.resp.send(js.client);
-        }).catch((err)=>{
-            js.client.data.message=err;
-            js.resp.send(js.client);
-        });
+    ltc.showSuccessList(by, starttime, endtime, page, maxpage).then((res)=>{
+        js.client.data.message='OK';
+        js.client.data.retrylist=res;
+        js.resp.send(js.client);
+    }).catch((err)=>{
+        js.client.data.message=err;
+        js.resp.send(js.client);
+    });
 }
 app.all('/show_retry_list',(req,res)=>{
     var js={};
@@ -561,7 +561,7 @@ function showRetryList(js){
     var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
     var maxpage=js.client.data.maxpage;    
-    ltc.showRetryList(starttime, endtime, page, maxpage).then((res)=>{
+    ltc.showRetryList(by,starttime, endtime, page, maxpage).then((res)=>{
         js.client.data.message='OK';
         js.client.data.retrylist=res;
         js.resp.send(js.client);
