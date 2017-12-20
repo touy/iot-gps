@@ -200,9 +200,9 @@ function init_db(dbname, design) {
     //return db;
   }
 init_db('refillnumbers', __design_refillnumbers);
-init_db('successlist', __design_event_list);
-init_db('failedlist', __design_event_list);
-init_db('retrylist', __design_event_list);
+// init_db('successlist', __design_event_list);
+// init_db('failedlist', __design_event_list);
+// init_db('retrylist', __design_event_list);
 
 const requestIp = require('request-ip');
 
@@ -230,6 +230,8 @@ app.all('/show_refill_numbers',(req,res)=>{
 });
 function showRefillNumbers(js){
     //var by=js.client.data.by;
+    var client=js.client;
+    var by=js.client.data.by;
     var isrenew=client.data.isrenew;
     var startime=client.data.startime;
     var endtime=client.data.endtime;
@@ -414,6 +416,7 @@ function querySearch(by,iscount,page,maxpage){
     return deferred.promise;
 }
 function searchRefillNumbers2(js){
+    var client=js.client;
     var by=js.client.data.by;
     var page=client.data.page;
     var maxpage=client.data.maxpage;
@@ -523,33 +526,20 @@ function updateRefillNumbers(js){
     });
 }
 
-
-
-app.all('/display_success_list',(req,res)=>{
+app.all('/show_success_list',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
-    displaySuccessList(js);
+    showSuccessList(js);
 });
-function displaySuccessList(js){
-    var by=js.client.data.by;
-    var type='phone';
+function showSuccessList(js){
+    
+    var by=js.client.data.by;    
     var startime=convertTZ(new Date(js.client.data.startime));
     var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
     var maxpage=js.client.data.maxpage;
-    if(by){
-        if(!isNaN(by)){
-            if(by.length>10){
-                type='target';
-            }
-            else{
-                type='phone'
-            }
-        }else{
-            type='owner';
-        }
-        ltc.viewSuccessList(by,type, starttime, endtime, page, maxpage).then((res)=>{
+        ltc.showSuccessList(by, starttime, endtime, page, maxpage).then((res)=>{
             js.client.data.message='OK';
             js.client.data.retrylist=res;
             js.resp.send(js.client);
@@ -557,67 +547,42 @@ function displaySuccessList(js){
             js.client.data.message=err;
             js.resp.send(js.client);
         });
-    }
 }
-app.all('/display_retry_list',(req,res)=>{
+app.all('/show_retry_list',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
-    displayRetryList(js);
+    showRetryList(js);
 });
-function displayRetryList(js){
+function showRetryList(js){
     var by=js.client.data.by;
     var type='phone';
     var startime=convertTZ(new Date(js.client.data.startime));
     var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
-    var maxpage=js.client.data.maxpage;
-    if(by){
-        if(!isNaN(by)){
-            if(by.length>10){
-                type='target';
-            }
-            else{
-                type='phone'
-            }
-        }else{
-            type='owner';
-        }
-        ltc.viewRetryList(by,type, starttime, endtime, page, maxpage).then((res)=>{
-            js.client.data.message='OK';
-            js.client.data.retrylist=res;
-            js.resp.send(js.client);
-        }).catch((err)=>{
-            js.client.data.message=err;
-            js.resp.send(js.client);
-        });
-    }
+    var maxpage=js.client.data.maxpage;    
+    ltc.showRetryList(starttime, endtime, page, maxpage).then((res)=>{
+        js.client.data.message='OK';
+        js.client.data.retrylist=res;
+        js.resp.send(js.client);
+    }).catch((err)=>{
+        js.client.data.message=err;
+        js.resp.send(js.client);
+    });
 }
-app.all('/display_failed_list',(req,res)=>{
+app.all('/show_failed_list',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
-    displayFailedList();
+    showFailedList();
 });
-function displayFailedList(js){
+function showFailedList(js){
     var by=js.client.data.by;
-    var type='phone';
     var startime=convertTZ(new Date(js.client.data.startime));
     var endtime=convertTZ(new Date(js.client.data.endtime));
     var page=js.client.data.page;
     var maxpage=js.client.data.maxpage;
-    if(by){
-        if(!isNaN(by)){
-            if(by.length>10){
-                type='target';
-            }
-            else{
-                type='phone'
-            }
-        }else{
-            type='owner';
-        }
-        ltc.viewFailedList(by,type, starttime, endtime, page, maxpage).then((res)=>{
+        ltc.showFailedList(by, starttime, endtime, page, maxpage).then((res)=>{
             js.client.data.message='OK';
             js.client.data.failedlist;
             js.resp.send(js.client);
@@ -625,7 +590,6 @@ function displayFailedList(js){
             js.client.data.message=err;
             js.resp.send(js.client);
         });
-    }
 }
 
 

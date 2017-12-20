@@ -10,6 +10,12 @@
             #heading { font-size: x-large; font-weight: bold; }
             .text { width: 99%; height: 200px; }
             .small { font-size: small; }
+            body{
+                margin-left: 10%;
+                margin-right: 10%;
+                margin-top: 3%;
+                width: 80%
+            }
         </style>        
         <script src="public/js/jquery-1.12.4.min.js"></script>
         <script src="public/js/jquery-ui-1.12.1/jquery-ui-1.12.1/jquery-ui.min.js"></script>
@@ -200,7 +206,7 @@ $(document).ready(function() {
                 html+="<input type='checkbox'  "+((element.isrenew)?"checked":"")+"/> </div>";
             }
             html+="</div>";
-            $('#trefilllist').append(html);
+            $('#crefillnumbers').append(html);
         });
     }); 
     
@@ -253,12 +259,17 @@ $(document).ready(function() {
             <button id='bretry'>retry list</button>
             <button id='bsuccess'>success list</button>
             <button id='bfailed'>failed list</button>
+            
             <button id='btopup'>top up</button>
             <button id='bdirecttopup'>direct topup</button>
         </div>
-        <div id='tabs'>
+        <div id='tabs'>            
+        <div id='trefilllist'>
             <label for="tags">Search:</label><input type="text" id="tags"/>
-        <div id='trefilllist'></div>
+            <div id="crefillnumbers">
+
+            </div>
+        </div>
         <div id='trefilldetails' class="col-xs-2 input-sm" style="display:none">
             <input type="hidden" class="form-control" id='gui' />
             <input type="hidden" class="form-control" id='_rev' />
