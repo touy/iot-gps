@@ -322,6 +322,13 @@ $(document).ready(function() {
                                     $("#directresultignoreindex"+index).insertBefore(str);
                                //console.log('inserted '+index +" "+$("#directresultignoreindex"+index).length);
                             }   
+                            else if(topup.description.indexOf('error')>-1){
+                                str="<div class='row' id='directresulterrorindex"+(index+1)+"'>"+str+"</div>";
+                                if(!index||$("#directresultignoreindex"+index).length||1)
+                                    $("#directresulterror").prepend(str);
+                                else
+                                    $("#directresulterrorindex"+index).insertBefore(str);
+                            }
                             else{
                                 str="<div class='row' id='directresultindex"+(index+1)+"'>"+str+"</div>";
                                 if(!index||!$("#directresultindex"+index).length||1)
