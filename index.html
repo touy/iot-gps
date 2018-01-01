@@ -318,7 +318,7 @@ $(document).ready(function() {
                                     $("#directresultignore").prepend(str);
                                 else
                                     $("#directresultignoreindex"+index).insertBefore(str);
-                               
+                               console.log('inserted '+index +" "+$("#directresultignoreindex"+index).length)
                             }   
                             else{
                                 let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
