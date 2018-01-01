@@ -286,6 +286,7 @@ $(document).ready(function() {
             client.data={};
             client.data.topupvalue=5000;
             client.data.phone=element;
+            
             if(element!=undefined&&element!=''){
                 //checkCenterBalance((res)=>{
                     //if(res){
@@ -293,6 +294,7 @@ $(document).ready(function() {
                         //updateCenterBalance(res.data.centerbalance.lastbalance);
                         jsonPost(url,client,function(res){
                             const topup=res.data.topup;
+                            console.log(res);
                             //console.log('topup '+client.data.phone);
                         // b = {
                         //     phone: phone,
@@ -305,13 +307,13 @@ $(document).ready(function() {
                         //     description:'topup OK',
                         //     gui: uuidV4()
                         // };
-                            if(topup.description.indexOf('ignore')>-1){
-                                let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
-                                str+='<div class="col-sm-3 small">'+element+'</div>';
-                                str+='<div class="col-sm-2 small">'+topup.lastbalance+'</div>';
-                                str+='<div class="col-sm-2 small">'+topup.currentbalance+'</div>';
-                                str+='<div class="col-sm-2 small">'+topup.description+'</div>';
-                                str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
+                        let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
+                        str+='<div class="col-sm-3 small">'+element+'</div>';
+                        str+='<div class="col-sm-2 small">'+topup.lastbalance+'</div>';
+                        str+='<div class="col-sm-2 small">'+topup.currentbalance+'</div>';
+                        str+='<div class="col-sm-2 small">'+topup.description+'</div>';
+                        str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
+                            if(topup.description.indexOf('ignore')>-1){                                
                                // $("#directresultignore").prepend(str);
                                 str="<div class='row' id='directresultignoreindex"+(index+1)+"'>"+str+"</div>";
                                 if(!index||$("#directresultignoreindex"+index).length||1)
@@ -321,12 +323,6 @@ $(document).ready(function() {
                                //console.log('inserted '+index +" "+$("#directresultignoreindex"+index).length);
                             }   
                             else{
-                                let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
-                                str+='<div class="col-sm-3 small">'+element+'</div>';
-                                str+='<div class="col-sm-2 small">'+topup.lastbalance+'</div>';
-                                str+='<div class="col-sm-2 small">'+topup.currentbalance+'</div>';
-                                str+='<div class="col-sm-2 small">'+topup.description+'</div>';
-                                str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
                                 str="<div class='row' id='directresultindex"+(index+1)+"'>"+str+"</div>";
                                 if(!index||!$("#directresultindex"+index).length||1)
                                     $("#directresult").prepend(str);
@@ -347,17 +343,17 @@ $(document).ready(function() {
             }   
             else{                
                 let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
-                                str+='<div class="col-sm-3 small"></div>';
-                                str+='<div class="col-sm-2 small"></div>';
-                                str+='<div class="col-sm-2 small"></div>';
-                                str+='<div class="col-sm-2 small"></div>';
-                                str+='<div class="col-sm-2 small">undefined or empty or length is not 10</div>';
-                                //$("#directresult").prepend(str);
-                                str="<div class='row' id='directresulterrorindex"+(index+1)+"'>"+str+"</div>";
-                                if(!index||!$("#directresulterrorindex"+index).length||1)
-                                    $("#directresulterror").prepend(str);
-                                else
-                                $("#directresulterrorindex"+index).insertBefore(str);
+                str+='<div class="col-sm-3 small"></div>';
+                str+='<div class="col-sm-2 small"></div>';
+                str+='<div class="col-sm-2 small"></div>';
+                str+='<div class="col-sm-2 small"></div>';
+                str+='<div class="col-sm-2 small">undefined or empty or length is not 10</div>';
+                //$("#directresult").prepend(str);
+                str="<div class='row' id='directresulterrorindex"+(index+1)+"'>"+str+"</div>";
+                if(!index||!$("#directresulterrorindex"+index).length||1)
+                    $("#directresulterror").prepend(str);
+                else
+                $("#directresulterrorindex"+index).insertBefore(str);
                 
             }         
         }
