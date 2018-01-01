@@ -417,6 +417,7 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
     }
     module.directTopup = function (phone, topupvalue) {
         var deferred = Q.defer();
+        var db=create_db('phonebalance');
         try {
             var owner='';
             var target='';
@@ -431,11 +432,12 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                     //this.checkPhoneBalance()
                     this.checkPhoneBalance(phone, target, owner).then((res) => {
                         const bres = res;
-                        if (res.lastbalance < __minvalue)
+                        if (bres.lastbalance < __minvalue+1 ||!__minvalue)
                             ltc.topupLTC(phone, topupvalue).then((res) => {
-                                var tres = res;
+                                const tres = res;
+                                console.log(res);
                                 if (tres.TopupResult.resultCode == '20') {
-                                    var b = {
+                                    const b = {
                                         phone: phone,
                                         topupvalue: topupvalue,
                                         imei: target,
@@ -453,7 +455,7 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                                         }
                                     });
                                 } else {
-                                    throw new Error(res);
+                                    throw new Error(tres);
                                 }
                             }).catch((err) => {
                                 throw err;
