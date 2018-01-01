@@ -3,7 +3,6 @@ const express = require('express');
 const app = express();
 const uuidV4 = require('uuid/v4');
 const nano = require('nano')('http://admin:admin@localhost:5984');
-const LTCSERVICE = require('./ltctopup')();
 //const nano = require('nano')('http://localhost:5984');
 const cors = require('cors');
 const base64 = require('file-base64');
@@ -215,7 +214,7 @@ var __cur_client = {};
 function convertTZ(fromTZ) {
   return moment.tz(fromTZ, "Asia/Vientiane").format();
 }
-var ltc = require("./ltctopup")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=', 'ITCENTER');
+var ltc = require("./ltcservice")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=', 'ITCENTER',5000);
 //var ltc = require("./ltcservice")('kP0SwtIzUA1pLBwsnZz3VA==', 'THEFRIEND',5000);
 
 app.all('/',(req,res)=>{
@@ -601,7 +600,20 @@ function showFailedList(js){
 
 
 
+app.all("/check_center_balance",(req,res)=>{
+    var js={};
+    js.client=req.body;
+    js.resp=res;
+    ltc.checkCenterBalance().then(res=>{
+        js.client.data.message='OK';
+        js.client.data.centerbalance=res;
+        js.resp.send(js.client);
+    }).catch(err=>{
+        js.client.data.message=err;
+        js.resp.send(js.client);
+    });
 
+});
 app.all('/show_center_balance',(req,res)=>{
     var js={};
     js.client=req.body;
@@ -642,11 +654,14 @@ app.all('/direct_topup',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
+    console.log('Here');
     ltc.directTopup(js.client.data.phone,js.client.data.topupvalue).then((res)=>{
+        console.log(res);
         js.client.data.topup=res;
         js.client.data.message='OK';
         js.resp.send(js.client);
     }).catch((err)=>{
+        console.log(err);
         js.client.data.message=err;
         js.resp.send(js.client);
     });

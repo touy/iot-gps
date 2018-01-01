@@ -12,8 +12,16 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
     const Q = require('q');
     var Promise = require('bluebird');
     var path = require('path');
+    var passwordValidator = require('password-validator');
     var __design_view = "objectList";
-
+    var phoneValidator = new passwordValidator();
+    phoneValidator
+      .is().min(10) // Minimum length 8 
+      .is().max(10) // Maximum length 100 
+      .has().not().letters() // Must not have lowercase letters 
+      .has().digits() // Must have digits 
+      .has().not().symbols()
+      .has().not().spaces() // Should not have spaces 
     function convertTZ(fromTZ) {
         return moment.tz(fromTZ, "Asia/Vientiane").format();
     }
@@ -77,169 +85,84 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
     //var ltc=require("./ltctopup")('kP0SwtIzUA1pLBwsnZz3VA==','THEFRIEND');
     //var ltc = require("./ltctopup")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=', 'ITCENTER');
     var ltc = require("./ltctopup")(__secret, __user);
-    var __design_failedlist = {
+    var __design_event_list = {
         "_id": "_design/objectList",
         "views": {
-            "findAll": {
-                "map": "function (doc) {\n  emit(null,doc);\n}"
-            },
-            "findCount": {
+            "findBy": {//phone, target, owner
                 "reduce": "_count",
-                "map": "function (doc) {\n  emit(1);\n}"
+                "map": "function (doc) {"+
+                "for(prop in doc){"+
+                "var prefix = doc[prop];"+
+                "emit([0,prop,prefix,doc.updatedtime],doc);"+
+                "emit([1,doc.updatedtime],doc);"+ // show previously
+               " emit([2,prop,prefix],doc);"+ // accept gui only
+              "}}"
             },
-            "findCountByPhone": {
+              "searchBy": {
                 "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],1);\n}"
-            },
-            "findByPhone": {
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],doc);\n}"
-            },
-            "findCountByTarget": {
+                "map": "function (doc) {\r\n  for(prop in doc){\r\n    var prefix = doc[prop];\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prop,prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }\r\n}"
+              }, 
+            "searchText": {
                 "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],1);\n}"
-            },
-            "findByTarget": {
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],doc);\n}"
-            },
-            "findCountByOwner": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],1);\n}"
-            },
-            "findByOnwer": {
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],doc);\n}"
-            },
-        },
-        "language": "javascript"
-    };
-    var __design_successlist = {
-        "_id": "_design/objectList",
-        "views": {
-            "findAll": {
-                "map": "function (doc) {\n  emit(null,doc);\n}"
-            },
-            "findCount": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  emit(1);\n}"
-            },
-            "findCountByPhone": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],1);\n}"
-            },
-            "findByPhone": {
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],doc);\n}"
-            },
-            "findCountByTarget": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],1);\n}"
-            },
-            "findByTarget": {
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],doc);\n}"
-            },
-            "findCountByOwner": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],1);\n}"
-            },
-            "findByOnwer": {
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],doc);\n}"
-            },
-        },
-        "language": "javascript"
-    };
-
-    var __design_retrylist = {
-        "_id": "_design/objectList",
-        "views": {
-            "findAll": {
-                "map": "function (doc) {\n  emit(null,doc);\n}"
-            },
-            "findCount": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  emit(1);\n}"
-            },
-            "findCountByPhone": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],1);\n}"
-            },
-            "findByPhone": {
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],doc);\n}"
-            },
-            "findCountByTarget": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],1);\n}"
-            },
-            "findByTarget": {
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],doc);\n}"
-            },
-            "findCountByOwner": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],1);\n}"
-            },
-            "findByOnwer": {
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],doc);\n}"
-            },
+              "map": "function (doc) {\r\n  var prefix;\r\n  for(prop in doc){\r\n    if(prop==\"_id\"||prop==\"_rev\"||prop==\"gui\"||typeof(doc[prop]===\"boolean\"))\r\n    continue;\r\n    if(!Date.parse(doc[prop]))\r\n         prefix += doc[prop];\r\n    else if(!isNAN(doc[prop]))\r\n        prefix += doc[prop];\r\n  }\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }"
+            }
         },
         "language": "javascript"
     };
     var __design_centerbalance = {
         "_id": "_design/objectList",
         "views": {
-            "findAll": {
-                "map": "function (doc) {\n  emit(null,doc);\n}"
-            },
-            "findCount": {
+            "findBy": {//phone, target, owner
                 "reduce": "_count",
-                "map": "function (doc) {\n  emit(1);\n}"
+                "map": "function (doc) {"+
+                "for(prop in doc){"+
+                "var prefix = doc[prop];"+
+                "emit([0,prop,prefix,doc.updatedtime],doc);"+
+                "emit([1,doc.updatedtime],doc);"+ // show previously
+               " emit([2,prop,prefix],doc);"+ // accept gui only
+              "}}"
             },
-            "findCountByUpdatedTime": {
+              "searchBy": {
                 "reduce": "_count",
-                "map": "function (doc) {\n  emit(doc.updatedtime,doc);\n}"
-            },
-            "findByUpdatedTime": {
-                "map": "function (doc) {\n  emit(doc.updatedtime,doc);\n}"
-            },
+                "map": "function (doc) {\r\n  for(prop in doc){\r\n    var prefix = doc[prop];\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prop,prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }\r\n}"
+              }, 
+            "searchText": {
+                "reduce": "_count",
+              "map": "function (doc) {\r\n  var prefix;\r\n  for(prop in doc){\r\n    if(prop==\"_id\"||prop==\"_rev\"||prop==\"gui\"||typeof(doc[prop]===\"boolean\"))\r\n    continue;\r\n    if(!Date.parse(doc[prop]))\r\n         prefix += doc[prop];\r\n    else if(!isNAN(doc[prop]))\r\n        prefix += doc[prop];\r\n  }\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }"
+            }
         },
         "language": "javascript"
     };
     var __design_phonebalance = {
         "_id": "_design/objectList",
         "views": {
-            "findAll": {
-                "map": "function (doc) {\n  emit(null,doc);\n}"
-            },
-            "findCount": {
+            "findBy": {//phone, target, owner
                 "reduce": "_count",
-                "map": "function (doc) {\n  emit(1);\n}"
+                "map": "function (doc) {"+
+                "for(prop in doc){"+
+                "var prefix = doc[prop];"+
+                "emit([0,prop,prefix,doc.updatedtime],doc);"+
+                "emit([1,doc.updatedtime],doc);"+ // show previously
+               " emit([2,prop,prefix],doc);"+ // accept gui only
+              "}}"
             },
-            "findCountByPhone": {
+              "searchBy": {
                 "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],1);\n}"
-            },
-            "findByPhone": {
-                "map": "function (doc) {\n  if(doc.phone) \n emit([doc.phone,updatedtime],doc);\n}"
-            },
-            "findCountByTarget": {
+                "map": "function (doc) {\r\n  for(prop in doc){\r\n    var prefix = doc[prop];\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prop,prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }\r\n}"
+              }, 
+            "searchText": {
                 "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],1);\n}"
-            },
-            "findByTarget": {
-                "map": "function (doc) {\n  if(doc.target) \n emit([doc.target,updatedtime],doc);\n}"
-            },
-            "findCountByOwner": {
-                "reduce": "_count",
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],1);\n}"
-            },
-            "findByOnwer": {
-                "map": "function (doc) {\n  if(doc.owner) \n emit([doc.owner,updatedtime],doc);\n}"
-            },
+              "map": "function (doc) {\r\n  var prefix;\r\n  for(prop in doc){\r\n    if(prop==\"_id\"||prop==\"_rev\"||prop==\"gui\"||typeof(doc[prop]===\"boolean\"))\r\n    continue;\r\n    if(!Date.parse(doc[prop]))\r\n         prefix += doc[prop];\r\n    else if(!isNAN(doc[prop]))\r\n        prefix += doc[prop];\r\n  }\r\n    var i;\r\n    if (prefix) {\r\n        for (i = 0; i < prefix.length; i += 1) {\r\n            emit([prefix.slice(i)], doc);\r\n        }\r\n    }\r\n  }"
+            }
         },
         "language": "javascript"
     };
 
     init_db('centerbalance', __design_centerbalance);
-    init_db('falurelist', __design_failedlist);
+    init_db('falurelist', __design_event_list);
     init_db('phonebalance', __design_phonebalance);
-    init_db('retrylist', __design_retrylist);
-    init_db('successlist', __design_successlist);
+    init_db('retrylist', __design_event_list);
+    init_db('successlist', __design_event_list);
 
     // var phone = '2055051550';
     // var topupvalue = 5000;
@@ -267,10 +190,10 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         }
                     });
                 } else {
-                    throw new Error(res);
+                    throw new Error(JSON.stringify(res));
                 }
             }).catch((err) => {
-                throw err;
+                deferred.reject(err);
             });
         } catch (error) {
             deferred.reject(err);
@@ -279,10 +202,10 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
     }
     module.viewCenterBalance=function(starttime,endtime,page,maxpage){
         var deferred=Q.defer();
-        findCountCenterBalance(starttime,endtime).then((res)=>{
+        findCenterBalance(starttime,endtime,true,0,1).then((res)=>{
             var count=res;            
             if(endtime=='') endtime=convertTZ(new Date());
-            findCenterBalance(starttime,endtime,page,maxpage).then((res)=>{
+            findCenterBalance(starttime,endtime,false,page,maxpage).then((res)=>{
                 deferred.resolve({arr:res,count:count});
             }).catch((err)=>{
                 deferred.reject(err);
@@ -292,58 +215,35 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
         });
         return deferred.promise;
     }
-    function findCountCenterBalance(starttime,endtime){
+    function findCenterBalance(starttime,endtime,iscount,page,maxpage ){
         var deferred=Q.defer();
         var db=create_db('centerbalance');
         if(endtime=='') endtime=convertTZ(new Date());
-        db.view(__design_view,'findCountByUpdatedTime',{startkey:starttime,endkey:endtime},(err,res)=>{
+        db.view(__design_view,'findBy',{
+            startkey:[1,endtime],endkey:[1,starttime],
+            descending:true,
+            reduce:iscount,
+            skip:page,
+            limit:maxpage},(err,res)=>{
             if(err)deferred.reject(err);
             else{
                 var arr=[];
                 if(res.rows.length){
                     arr.push(res.rows[0].value);
                 }
-                deferred.resolve(arr[0]);
+                if(iscount)
+                    deferred.resolve(arr[0]);
+                else deferred.resolve(arr);
             }
         });
         return deferred.promise;
     }
-    function findCenterBalance(starttime,endtime,page,maxpage){
-        var deferred=Q.defer();
-        var db=create_db('centerbalance');
-        findCountCenterBalance(starttime,endtime).then((res)=>{
-            var count=res;
-            db.view(__design_view,'findByUpdatedTime',{
-                startkey:endtime,// reverse it here when set descending=true;
-                endkey:starttime,// reverse it here when set descending=true;
-                descending:true,
-                skip:page,
-                limit:maxpage
-            },(err,res)=>{
-                if(err)deferred.reject(err);
-                else{
-                    var arr=[];
-                    var array=res.rows;
-                    if(res.rows.length){
-                        for (let index = 0; index < array.length; index++) {
-                            const element = array[index].value;
-                            arr.push(element);
-                        }
-                    }
-                    deferred.resolve({arr:arr,count:count});
-                }
-            });
-        }).catch((err)=>{
-            deferred.reject(err);
-        });        
-        return deferred.promise;
-    }
+
     module.checkPhoneBalance = function (phone, target, owner) {
         var deferred = Q.defer();
         var db = create_db('phonebalance');
         try {
             ltc.checkBalanceLTC(phone).then((res) => {
-
                 if (res.CheckBalanceResult.resultCode == '20') {
                     var b = {
                         phone: phone,
@@ -362,17 +262,54 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         }
                     });
                 } else {
-                    throw new Error(res);
+                    throw new Error(JSON.stringify(res));
                 }
             }).catch((err) => {
-                throw err;
+                deferred.reject(err);
             });
         } catch (error) {
             deferred.reject(err);
         }
         return deferred.promise;
     }
+    module.viewPhoneBalance=function(phone,starttime,endtime,page,maxpage){
+        var deferred=Q.defer();
+        findPhoneBalance(phone,starttime,endtime,true,0,1).then(res=>{
+                var count=res;
+                findPhoneBalance(phone,stat,endtime,false,page,maxpage).then(res=>{
+                    deferred.resolve({arr:res,count:count});
+                }).catch(err=>{
+                    throw err;
+                });            
+            }).catch(err=>{
+                deferred.reject(err);
+            });
+        return deferred.promise;
+    }
 
+    function findPhoneBalance(phone,starttime,endtime,iscount,page,maxpage){
+        var deferred=Q.defer();
+        var db=create_db('phonebalance')
+        db.view(__design_view,'findBy',{startkey:[0,"phone",phone,endtime],endkey:[0,"phone",phone,starttime],
+            descending:true,reduce:iscount,
+            skip:page,limit:maxpage},(err,res)=>{
+            if(err)deferred.reject(err);
+            else{
+                var arr=[];
+                if(res.rows.length){
+                    for (let index = 0; index < arr.length; index++) {
+                        const element = arr[index].value;
+                        arr.push(element);
+                    }
+                }
+                if(iscount)
+                    deferred.resolve(arr[0]);
+                else
+                    deferred.resolve(arr);
+            }
+        });
+        return deferred.promise;
+    }
 
     function topupTarget(phone, topupvalue, target, owner) {
         var deferred = Q.defer();
@@ -382,7 +319,22 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                 if (res.lastbalance > topupvalue) {
                     this.checkPhoneBalance(phone, target, owner).then((res) => {
                         var bres = res;
-                        if (res.lastbalance < __minvalue)
+                        var curDate=convertTZ(new Date());
+                        var preDate=convertTZ(curDate.setDate(new Date(curDate.getDate()-65)));
+                        var secodMonth=convertTZ(curDate.setDate(new Date(curDate.getDate()-30)));
+                        this.showSuccessList(phone,curDate,preDate,0,5).then(res=>{
+                            var  pres=res.arr;
+                            var  pcount=res.count;
+                            var isSecondMonth=false;
+                            if(!pres.length)
+                                isSecondMonth=true;                            
+                            else
+                            for (let index = 0; index < pres.length; index++) {
+                                const element = pres[index];
+                                if((new Date(element.updatedtime))<=secodMonth)
+                                    isSecondMonth=true;
+                            }
+                            if (res.lastbalance < __minvalue || isSecondMonth)
                             ltc.topupLTC(phone, topupvalue).then((res) => {
                                 var tres = res;
                                 if (res.TopupResult.resultCode == '20') {
@@ -418,7 +370,7 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                                         }
                                     });
                                 } else {
-                                    throw new Error(res);
+                                    throw new Error(JSON.stringify(res));
                                 }
                             }).catch((err) => {
                                 throw err;
@@ -431,14 +383,17 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                                 amount: topupvalue
                             });
                         }
+                        }).catch(err=>{
+                            throw err;
+                        });
                     }).catch((err) => {
-                        throw err;
+                        deferred.reject(err);
                     });
                 } else {
-                    throw new Error(res)
+                    throw new Error(JSON.stringify(res))
                 }
             }).catch((err) => {
-                throw err;
+                deferred.reject(err);
             })
         } catch (error) {
             addRetryList(phone, topupvalue, target, owner);
@@ -446,39 +401,55 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
         }
         return deferred.promise;
     }
-    module.directTopup = function (phone, toupvalue) {
+    module.testDirectTopup=function (phone, topupvalue) {
+        var deferred=Q.defer();
+        ltc.topupLTC(phone, topupvalue).then((res) => {
+            var tres = res;
+            if (res.TopupResult.resultCode == '20') {
+                deferred.resolve(res);                
+            } else {
+                throw new Error(JSON.stringify(res));
+            }
+        }).catch((err) => {
+           deferred.reject(err);
+        });
+        return deferred.promise;
+    }
+    module.directTopup = function (phone, topupvalue) {
         var deferred = Q.defer();
         try {
-            this.checkCenterBalance().then((res) => {
-                if (res.lastbalance > topupvalue) {
+            var owner='';
+            var target='';
+            console.log('Here');
+            if(err=phoneValidator.validate(phone, {
+                list: true
+              }).length||phone.indexOf("205")!=0||isNaN(topupvalue)){
+                  throw new Error("error "+ JSON.parse(err)+"| phone:"+phone+" value"+topupvalue)
+            }
+            // this.checkCenterBalance().then((res) => {
+                //if (res.lastbalance > topupvalue) {
+                    //this.checkPhoneBalance()
                     this.checkPhoneBalance(phone, target, owner).then((res) => {
-                        var bres = res;
+                        const bres = res;
                         if (res.lastbalance < __minvalue)
                             ltc.topupLTC(phone, topupvalue).then((res) => {
                                 var tres = res;
-                                if (res.TopupResult.resultCode == '20') {
+                                if (tres.TopupResult.resultCode == '20') {
                                     var b = {
                                         phone: phone,
                                         topupvalue: topupvalue,
                                         imei: target,
                                         owner: owner,
-                                        lastbalance: res.TopupResult.amount,
+                                        lastbalance: tres.TopupResult.amount,
+                                        currentbalance: tres.lastbalance,
                                         updatedtime: convertTZ(new Date()),
+                                        description:'topup OK',
                                         gui: uuidV4()
                                     }
                                     db.insert(b, b.gui, (err, res) => {
                                         if (err) deferred.reject(err);
                                         else {
-                                            this.checkPhoneBalance(phone, target, owner).then((res) => {
-                                                deferred.resolve({
-                                                    phone: phone,
-                                                    lastbalance: bres.lastbalance,
-                                                    currentbalance: res.lastbalance,
-                                                    amount: tres
-                                                });
-                                            }).catch((err) => {
-                                                throw err;
-                                            });
+                                            deferred.resolve(b);
                                         }
                                     });
                                 } else {
@@ -490,20 +461,25 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         else {
                             deferred.resolve({
                                 phone: phone,
-                                lastbalance: res.lastbalance,
-                                currentbalance: res.lastbalance,
-                                amount: topupvalue
+                                topupvalue: topupvalue,
+                                imei: target,
+                                owner: owner,
+                                lastbalance: bres.lastbalance,
+                                currentbalance: bres.lastbalance,
+                                updatedtime: convertTZ(new Date()),
+                                description:'ignore topup',
+                                gui: uuidV4()
                             });
                         }
                     }).catch((err) => {
                         throw err;
                     });
-                } else {
-                    throw new Error(res);
-                }
-            }).catch((err) => {
-                throw err;
-            });
+                // } else {
+                //     throw new Error("not enough fund "+JSON.stringify(res));
+                // }
+            // }).catch((err) => {
+            //     deferred.reject(err);
+            // });
         } catch (error) {
             deferred.reject(error);
         }
@@ -544,54 +520,16 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
         }
         return deferred.promise;
     }
-    function findCountRetryList(by,type,starttime,endtime){
-        var deferred=Q.defer();
-        var db=create_db('retrylist');
-        if(type=='phone')
-        db.view(__design_view,'findCountByPhone',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else if(type=='target')
-        db.view(__design_view,'findCountByTarget',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else if(type=='owner')
-        db.view(__design_view,'findCountByOwner',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else{
-            deferred.reject(new Error('error wrong type'));
-        }
-        return deferred.promise;
-    }
-    function findRetryByPhone(phone, starttime, endtime, page, maxpage) {
+
+    function querySearchRetryList(by, starttime, endtime,iscount, page, maxpage) {
         var deferred = Q.defer();
         var db = create_db('retrylist');
-        db.view(__design_view, 'findByPhone', {
+        db.view(__design_view, 'searchText', {
             descending: true,
-            startkey: [phone, endtime],
-            endkey: [phone, starttime],
+            startkey: [by, endtime],
+            endkey: [by, starttime],
+            reduce:iscount,
+            descending:true,
             limit: maxpage,
             skip: page
         }, (err, res) => {
@@ -605,19 +543,24 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         arr.push(element)
                     }
                 }
+                if(iscount)
+                deferred.resolve(arr[0]);
+                else
                 deferred.resolve(arr);
             }
         });
         return deferred.promise;
     }
 
-    function findRetryByTarget(target, starttime, endtime, page, maxpage) {
+    function queryShowRetryList(starttime, endtime,iscount, page, maxpage) {
         var deferred = Q.defer();
         var db = create_db('retrylist');
-        db.view(__design_view, 'findByTarget', {
+        db.view(__design_view, 'findBy', {
             descending: true,
-            startkey: [target, endtime],
-            endkey: [target, starttime],
+            startkey: [1, endtime],
+            endkey: [1, starttime],
+            reduce:iscount,
+            descending:true,
             limit: maxpage,
             skip: page
         }, (err, res) => {
@@ -631,79 +574,43 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         arr.push(element)
                     }
                 }
+                if(iscount)
+                deferred.resolve(arr[0]);
+                else
                 deferred.resolve(arr);
             }
         });
         return deferred.promise;
     }
-
-    function findRetryByOwner(owner, starttime, endtime, page, maxpage) {
+    module.showRetryList = function (by,starttime, endtime, page, maxpage) {
         var deferred = Q.defer();
-        var db = create_db('retrylist');
-        db.view(__design_view, 'findByOwner', {
-            descending: true,
-            startkey: [owner, endtime],
-            endkey: [owner, starttime],
-            limit: maxpage,
-            skip: page
-        }, (err, res) => {
-            if (err) deferred.reject(err);
-            else {
-                var arr = [];
-                var array = res.rows;
-                if (array.length) {
-                    for (let index = 0; index < array.length; index++) {
-                        const element = array[index].value;
-                        arr.push(element)
-                    }
-                }
-                deferred.resolve(arr);
-            }
-        });
-        return deferred.promise;
-    }
-
-    module.viewRetryList = function (by, type, starttime, endtime, page, maxpage) {
-        var deferred = Q.defer();
-        var db = create_db('retrylist');
-        if (type=='phone') {
-            findCountRetryList(by,type,starttime,endtime).then((res)=>{
+        var db = create_db('retrylist');  
+        if(by)
+        querySearchRetryList(by,starttime,endtime,true,0,1).then((res)=>{
             var count=res;
-            findRetryByPhone(by, starttime, endtime, page, maxpage).then((res) => {
+            querySearchRetryList(by,type, starttime, endtime,false, page, maxpage).then((res) => {
                             deferred.resolve({arr:res,count:count});
                         }).catch((err) => {
                             deferred.reject(err);
                         });
+        }).catch((err)=>{
+            deferred.reject(err);
+        });
+        else      
+        queryShowRetryList(starttime,endtime,true,0,1).then((res)=>{
+                var count=res;
+                queryShowRetryList(starttime, endtime,false, page, maxpage).then((res) => {
+                                deferred.resolve({arr:res,count:count});
+                            }).catch((err) => {
+                                deferred.reject(err);
+                            });
             }).catch((err)=>{
+                deferred.reject(err);
+        });
 
-            });
-            
-        } else if (type=='target') {
-            findCountRetryList(by,type,starttime,endtime).then((res)=>{
-                var count=res;
-                findRetryByPhone(by, starttime, endtime, page, maxpage).then((res) => {
-                                deferred.resolve({arr:res,count:count});
-                            }).catch((err) => {
-                                deferred.reject(err);
-                            });
-            }).catch((err)=>{
-                deferred.reject(err);
-            });
-        } else if (type=='owner') {
-            findCountRetryList(by,type,starttime,endtime).then((res)=>{
-                var count=res;
-                findRetryByPhone(owner, starttime, endtime, page, maxpage).then((res) => {
-                                deferred.resolve({arr:res,count:count});
-                            }).catch((err) => {
-                                deferred.reject(err);
-                            });
-            }).catch((err)=>{
-                deferred.reject(err);
-            });
-            
-        }
         return deferred.promise;
     }
+
 
     function addSuccessList(phone, topvalue, target, owner) {
         var deferred = Q.defer();
@@ -723,14 +630,15 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
         });
         return deferred.promise;
     }
-
-    function findSuccessByPhone(phone, starttime, endtime, page, maxpage) {
+    function querySearchSuccesList(by, starttime, endtime,iscount, page, maxpage) {
         var deferred = Q.defer();
         var db = create_db('successlist');
-        db.view(__design_view, 'findByPhone', {
+        db.view(__design_view, 'searchText', {
             descending: true,
-            startkey: [phone, endtime],
-            endkey: [phone, starttime],
+            startkey: [by, endtime],
+            endkey: [by, starttime],
+            reduce:iscount,
+            descending:true,
             limit: maxpage,
             skip: page
         }, (err, res) => {
@@ -744,19 +652,23 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         arr.push(element)
                     }
                 }
+                if(iscount)
+                deferred.resolve(arr[0]);
+                else
                 deferred.resolve(arr);
             }
         });
         return deferred.promise;
     }
-
-    function findSuccessByTarget(target, starttime, endtime, page, maxpage) {
+    function queryShowSuccesList(starttime, endtime,iscount, page, maxpage) {
         var deferred = Q.defer();
         var db = create_db('successlist');
-        db.view(__design_view, 'findByTarget', {
+        db.view(__design_view, 'findBy', {
             descending: true,
-            startkey: [target, endtime],
-            endkey: [target, starttime],
+            startkey: [1, endtime],
+            endkey: [1, starttime],
+            reduce:iscount,
+            descending:true,
             limit: maxpage,
             skip: page
         }, (err, res) => {
@@ -770,117 +682,38 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         arr.push(element)
                     }
                 }
+                if(iscount)
+                deferred.resolve(arr[0]);
+                else
                 deferred.resolve(arr);
             }
         });
         return deferred.promise;
     }
-
-    function findSuccessByOwner(owner, starttime, endtime, page, maxpage) {
-        var deferred = Q.defer();
-        var db = create_db('retrylist');
-        db.view(__design_view, 'findByOwner', {
-            descending: true,
-            startkey: [owner, endtime],
-            endkey: [owner, starttime],
-            limit: maxpage,
-            skip: page
-        }, (err, res) => {
-            if (err) deferred.reject(err);
-            else {
-                var arr = [];
-                var array = res.rows;
-                if (array.length) {
-                    for (let index = 0; index < array.length; index++) {
-                        const element = array[index].value;
-                        arr.push(element)
-                    }
-                }
-                deferred.resolve(arr);
-            }
-        });
-        return deferred.promise;
-    }
-    function findCountSuccessList(by,type,starttime,endtime){
-        var deferred=Q.defer();
-        var db=create_db('successlist');
-        if(type=='phone')
-        db.view(__design_view,'findCountByPhone',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else if(type=='target')
-        db.view(__design_view,'findCountByTarget',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else if(type=='owner')
-        db.view(__design_view,'findCountByOwner',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else{
-            deferred.reject(new Error('error wrong type'));
-        }
-        return deferred.promise;
-    }
-    module.viewSuccessList = function (by,type, starttime, endtime, page, maxpage) {
-        var deferred = Q.defer();
-        var db = create_db('successlist');
-        if (type=="phone") {
-            findCountSuccessList(by,type,starttime,endtime).then((res)=>{
-                var count=res;
-                findSuccessByPhone(by, starttime, endtime, page, maxpage).then((res) => {
+    module.showSuccessList = function (by, starttime, endtime, page, maxpage) {
+        var deferred = Q.defer();       
+        if(by)
+        querySearchSuccesList(by, starttime, endtime,true, page, maxpage).then(res=>{
+            var count=res;
+            querySearchSuccesList(by, starttime, endtime,false, page, maxpage).then((res) => {
                 deferred.resolve({arr:res,count:count});
             }).catch((err) => {
                 deferred.reject(err);
             });
-            }).catch((err)=>{
-                deferred.reject(err);
-            });
-            
-        } else if (type=="target") {
-            findCountSuccessList(by,type,starttime,endtime).then((res)=>{
+        }).catch(err=>{
+            deferred.reject(err);
+        });
+        else
+            queryShowSuccesList(starttime,endtime,true,0,1).then((res)=>{
                 var count=res;
-                findSuccessByPhone(by, starttime, endtime, page, maxpage).then((res) => {
-                deferred.resolve(res);
-            }).catch((err) => {
-                deferred.reject(err);
-            });
-            }).catch((err)=>{
-                deferred.reject(err);
-            });            
-        } else if (type=="owner") {
-            findCountSuccessList(by,type,starttime,endtime).then((res)=>{
-                var count=res;
-                findSuccessByPhone(by, starttime, endtime, page, maxpage).then((res) => {
-                deferred.resolve(res);
-            }).catch((err) => {
-                deferred.reject(err);
-            });
+                queryShowSuccesList(starttime, endtime,false, page, maxpage).then((res) => {
+                    deferred.resolve({arr:res,count:count});
+                }).catch((err) => {
+                    deferred.reject(err);
+                });
             }).catch((err)=>{
                 deferred.reject(err);
             });
-            
-        }
         return deferred.promise;
     }
 
@@ -902,14 +735,15 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
         });
         return deferred.promise;
     }
-
-    function findFailedByPhone(phone, starttime, endtime, page, maxpage) {
+    function querySearchFailedList(by, starttime, endtime,iscount, page, maxpage) {
         var deferred = Q.defer();
         var db = create_db('failedlist');
-        db.view(__design_view, 'findByPhone', {
+        db.view(__design_view, 'searchText', {
             descending: true,
-            startkey: [phone, endtime],
-            endkey: [phone, starttime],
+            startkey: [by, endtime],
+            endkey: [by, starttime],
+            reduce:iscount,
+            descending:true,
             limit: maxpage,
             skip: page
         }, (err, res) => {
@@ -923,19 +757,23 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         arr.push(element)
                     }
                 }
+                if(iscount)
+                deferred.resolve(arr[0]);
+                else
                 deferred.resolve(arr);
             }
         });
         return deferred.promise;
     }
-
-    function findFailedByTarget(target, starttime, endtime, page, maxpage) {
+    function queryShowFailedList(starttime, endtime,iscount, page, maxpage) {
         var deferred = Q.defer();
         var db = create_db('failedlist');
-        db.view(__design_view, 'findByTarget', {
+        db.view(__design_view, 'findBy', {
             descending: true,
-            startkey: [target, endtime],
-            endkey: [target, starttime],
+            startkey: [1, endtime],
+            endkey: [1, starttime],
+            reduce:iscount,
+            descending:true,
             limit: maxpage,
             skip: page
         }, (err, res) => {
@@ -949,119 +787,41 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                         arr.push(element)
                     }
                 }
+                if(iscount)
+                deferred.resolve(arr[0]);
+                else
                 deferred.resolve(arr);
             }
         });
         return deferred.promise;
     }
-
-    function findFailedByOwner(owner, starttime, endtime, page, maxpage) {
-        var deferred = Q.defer();
-        var db = create_db('failedlist');
-        db.view(__design_view, 'findByOwner', {
-            descending: true,
-            startkey: [owner, endtime],
-            endkey: [owner, starttime],
-            limit: maxpage,
-            skip: page
-        }, (err, res) => {
-            if (err) deferred.reject(err);
-            else {
-                var arr = [];
-                var array = res.rows;
-                if (array.length) {
-                    for (let index = 0; index < array.length; index++) {
-                        const element = array[index].value;
-                        arr.push(element)
-                    }
-                }
-                deferred.resolve(arr);
-            }
-        });
-        return deferred.promise;
-    }
-    function findCountFailedList(by,type,starttime,endtime){
-        var deferred=Q.defer();
-        var db=create_db('failedlist');
-        if(type=='phone')
-        db.view(__design_view,'findCountByPhone',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else if(type=='target')
-        db.view(__design_view,'findCountByTarget',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else if(type=='owner')
-        db.view(__design_view,'findCountByOwner',{startkey:[by,starttime],endkey:[by,endtime]},(err,res)=>{
-            if(err)deferred.reject(err);
-            else{
-                var arr=[];
-                if(res.rows.length){
-                    arr.push(res.rows[0].value);
-                }
-                deferred.resolve(arr[0]);
-            }
-        });
-        else{
-            deferred.reject(new Error('error wrong type'));
-        }
-        return deferred.promise;
-    }
-    module.viewfailedList = function (by,type, starttime, endtime, page, maxpage) {
+   
+    module.showfailedList = function (by, starttime, endtime, page, maxpage) {
         var deferred = Q.defer();
         var db = create_db('failedlist');
         try {
-            if (type=="phone") {
-                findCountFailedList(by,type,starttime,endtime).then((res)=>{
-                    var count=res;
-                    findFailedByPhone(by, starttime, endtime, page, maxpage).then((res) => {
-                    deferred.resolve({arr:res,count:count});
+            if (by) 
+            querySearchFailedList(by,starttime,endtime,false,0,1).then((res)=>{
+                var count=res;
+                querySearchFailedList(by,starttime, endtime,false, page, maxpage).then((res) => {
+                deferred.resolve({arr:res,count:count});
+                }).catch((err) => {
+                deferred.reject(err);
+                });
+            }).catch((err)=>{
+                    deferred.reject(err);
+                });
+            else
+            queryShowFailedList(starttime,endtime,false,0,1).then((res)=>{
+                var count=res;
+                queryShowFailedList(starttime, endtime,false, page, maxpage).then((res) => {
+                deferred.resolve({arr:res,count:count});
                 }).catch((err) => {
                     deferred.reject(err);
                 });
-                }).catch((err)=>{
-                    deferred.reject(err);
-                });
-                
-            } else if (type=="target") {
-                findCountFailedList(by,type,starttime,endtime).then((res)=>{
-                    var count=res;
-                    findFailedByPhone(by, starttime, endtime, page, maxpage).then((res) => {
-                    deferred.resolve({arr:res,count:count});
-                }).catch((err) => {
-                    deferred.reject(err);
-                });
-                }).catch((err)=>{
-                    deferred.reject(err);
-                });
-                
-            } else if (type=="owner") {
-                findCountFailedList(by,type,starttime,endtime).then((res)=>{
-                    var count=res;
-                    findFailedByPhone(by, starttime, endtime, page, maxpage).then((res) => {
-                    deferred.resolve({arr:res,count:count});
-                }).catch((err) => {
-                    deferred.reject(err);
-                });
-                }).catch((err)=>{
-                    deferred.reject(err);
-                });
-                
-            }
+            }).catch((err)=>{
+                deferred.reject(err);
+            });            
         } catch (error) {
             deferred.reject(error);
         }
@@ -1072,13 +832,18 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
     module.refillGPSNumber = function (phone, topupvalue, target, owner) {
         var deferred = Q.defer();
         try {
+            if(err=phoneValidator.validate(phone, {
+                list: true
+              }).length||phone.indexOf("205")!=0||isNaN(topupvalue)){
+                deferred.reject( new Error("error "+ JSON.parse(err)+"| phone:"+phone+" value"+topupvalue));
+            }else
             topupTarget(phone, toupvalue, target, owner).then((res) => {
                 if (res) {
                     addSuccessList(phone, topupvalue, target, owner);
                     deferred.resolve(res);
                 }
             }).catch((err) => {
-                throw err;
+                deferred.reject(err);
             });
         } catch (error) {
             addFailedList(phone, toupvalue, target, owner);
@@ -1092,7 +857,7 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
             ltc.sendSMSLTC(phone,message,header).then((res)=>{
                 deferred.resolve(res);
                 }).catch((err)=>{
-                    throw err;
+                    deferred.reject(err);
                 });   
         } catch (error) {
             deferred.reject(error);
@@ -1105,7 +870,7 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
             ltc.paymentLTC(phone,value).then((res)=>{
                 deferred.resolve(res);
                 }).catch((err)=>{
-                    throw err;
+                    deferred.reject(err);
                 });   
         } catch (error) {
             deferred.reject(error);
@@ -1118,7 +883,7 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
             ltc.queryDetails(startdate,enddate).then((res)=>{
                 deferred.resolve(res);
                 }).catch((err)=>{
-                    throw err;
+                    deferred.reject(err);
                 });   
         } catch (error) {
             deferred.reject(error);

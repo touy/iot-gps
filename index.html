@@ -248,11 +248,125 @@ $(document).ready(function() {
         tabshows("tfailedlist");
         //show failed list
     }); 
+    $("#bdirecttopup").click(function(){
+        tabshows('tdirecttopup');
+    });
+    function updateCenterBalance(b){
+        $("#centerbalance").text(b);
+    }
+    function checkCenterBalance(cb){
+        //console.log('not call balck '+cb);
+        var client={};
+        client.data={};
+        if(!cb){         
+            jsonPost("/check_center_balance",client,(res)=>{            
+            updateCenterBalance(res.data.centerbalance.lastbalance);
+        });
+        }        
+        else{
+            jsonPost("/check_center_balance",client,cb); 
+        }
+    }
+    $("#bdirectopup").click(function(){    
+        $("#directresult").empty().show();    
+        $("#directresulterror").empty().show();
+        $("#directresultignore").empty().show();
+    
+        var url="/direct_topup";
+        var phones=$("#directphone").val();
+        
+        phones=phones.split('\n');
+        console.log(phones.length);
+        checkCenterBalance("");
+        
+        for (let index = 0; index < phones.length; index++) {
+            let element = phones[index];
+            if(element=='') continue;
+            let client={};
+            client.data={};
+            client.data.topupvalue=5000;
+            client.data.phone=element;
+            if(element!=undefined&&element!=''){
+                //checkCenterBalance((res)=>{
+                    //if(res){
+                    // if(1){
+                        //updateCenterBalance(res.data.centerbalance.lastbalance);
+                        jsonPost(url,client,function(res){
+                            const topup=res.data.topup;
+                            //console.log('topup '+client.data.phone);
+                        // b = {
+                        //     phone: phone,
+                        //     topupvalue: topupvalue,
+                        //     imei: target,
+                        //     owner: owner,
+                        //     lastbalance: res.TopupResult.amount,
+                        //     currentbalance: res.lastbalance,
+                        //     updatedtime: convertTZ(new Date()),
+                        //     description:'topup OK',
+                        //     gui: uuidV4()
+                        // };
+                            if(topup.description.indexOf('ignore')>-1){
+                                let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
+                                str+='<div class="col-sm-3 small">'+element+'</div>';
+                                str+='<div class="col-sm-2 small">'+topup.lastbalance+'</div>';
+                                str+='<div class="col-sm-2 small">'+topup.currentbalance+'</div>';
+                                str+='<div class="col-sm-2 small">'+topup.description+'</div>';
+                                str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
+                               // $("#directresultignore").prepend(str);
+                                str="<div class='row' id='directresultignoreindex"+(index+1)+"'>"+str+"</div>";
+                                if(!index||!$("#directresultignoreindex"+index))
+                                    $("#directresultignore").prepend(str);
+                                else
+                                $("#directresultignoreindex"+index).insertBefore(str);
+                               
+                            }   
+                            else{
+                                let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
+                                str+='<div class="col-sm-3 small">'+element+'</div>';
+                                str+='<div class="col-sm-2 small">'+topup.lastbalance+'</div>';
+                                str+='<div class="col-sm-2 small">'+topup.currentbalance+'</div>';
+                                str+='<div class="col-sm-2 small">'+topup.description+'</div>';
+                                str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
+                                str="<div class='row' id='directresultindex"+(index+1)+"'>"+str+"</div>";
+                                if(!index||!$("#directresultindex"+index))
+                                    $("#directresult").prepend(str);
+                                else
+                                $("#directresultindex"+index).insertBefore(str);
+                                // $("#directresult").after() (str);
+                                
+                            }                         
+                        });
+                    // }
+                    // else{
+                    //     $("#directresulterror").prepend("<div> "+element+"| "+JSON.stringify(res)+"</div>");
+                    //     $("#directresulterror").show();
+                        
+                    // }
+                     
+                //});                            
+            }   
+            else{                
+                let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
+                                str+='<div class="col-sm-3 small"></div>';
+                                str+='<div class="col-sm-2 small"></div>';
+                                str+='<div class="col-sm-2 small"></div>';
+                                str+='<div class="col-sm-2 small"></div>';
+                                str+='<div class="col-sm-2 small">undefined or empty or length is not 10</div>';
+                                //$("#directresult").prepend(str);
+                                str="<div class='row' id='directresulterrorindex"+(index+1)+"'>"+str+"</div>";
+                                if(!index||!$("#directresulterrorindex"+index))
+                                    $("#directresulterror").prepend(str);
+                                else
+                                $("#directresulterrorindex"+index).insertBefore(str);
+                
+            }         
+        }
+    });
 });
         </script>
     </head>
     <body>
-        
+        center balance:<div id="centerbalance"></div>
         <div id='menu'>
             <button id='brefilllist'>Refill list</button>
             <button id='beditdevice'>edit device</button>
@@ -345,11 +459,48 @@ $(document).ready(function() {
         <div id='tsuccesslist' style="display:none"></div>
         <div id='tfailedlist' style="display:none"></div>
         <div id='tdirecttopup' style="display: none">
-                <input type="text" id='directphone' /><input type='text' id='topupvalue' />
+                <label for="directphone">phone</label>
+                <textarea id="directphone" style="width:200px;height:200px"></textarea>
+                <label for="topupvalue">value</label>
+                <input type='text' id='topupvalue' />
+                <button id="bdirectopup">Confirm</button>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-sm-4" style="background-color:beige;">
+                                <div class="col-sm-1">#</div>
+                                <div class="col-sm-3">phone</div>
+                                <div class="col-sm-2">last</div>
+                                <div class="col-sm-2">current</div>
+                                <div class="col-sm-2">des</div>
+                                <div class="col-sm-2">mess</div>
+                        </div>
+                        <div class="col-sm-4" style="background-color:yellow;">
+                                <div class="col-sm-1">#</div>
+                                <div class="col-sm-3">phone</div>
+                                <div class="col-sm-2">last</div>
+                                <div class="col-sm-2">current</div>
+                                <div class="col-sm-2">des</div>
+                                <div class="col-sm-2">mess</div>
+                        </div>
+                        <div class="col-sm-4" style="background-color:crimson;">
+                                <div class="col-sm-1">#</div>
+                                <div class="col-sm-3">phone</div>
+                                <div class="col-sm-2">last</div>
+                                <div class="col-sm-2">current</div>
+                                <div class="col-sm-2">des</div>
+                                <div class="col-sm-2">mess</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div  id="directresult" class="col-sm-4" style="background-color:beige;">                            
+                        </div>                       
+                        <div  id="directresultignore" class="col-sm-4" style="background-color:yellow;">                            
+                        </div>                       
+                        <div  id="directresulterror" class="col-sm-4" style="background-color:crimson;">                          
+                        </div>
+                    </div>
+                </div>        
         </div>
-
         </div>
-
-
     </body>
 </html>

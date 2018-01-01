@@ -52,7 +52,7 @@ module.exports = function (__secret='',__user='') {
         if(m!="OK"||m1!="OK")
             throw new Error(m+m1);
         var soap = require('soap');
-        var url = 'http://ltcservice.laotel.com:5678/Services.asmx?WSDL';
+        var url = 'http://ltcservice.laotel.com:6848/Services.asmx?WSDL';
         var type='3';
         var trans_id=cryptoRandomNumber((Number.MAX_SAFE_INTEGER-281474976710655), Number.MAX_SAFE_INTEGER);
         this.ltcEncrypt(phone+value+ltcUser+trans_id).then(function(body){
@@ -67,7 +67,7 @@ module.exports = function (__secret='',__user='') {
         }).catch(function(err){
             console.log(err);
             deferred.reject(err);
-        }).done();
+        });
         return deferred.promise;
       }
       module.paymentLTC=function(phone,value){
@@ -77,7 +77,7 @@ module.exports = function (__secret='',__user='') {
         if(m!="OK"||m1!="OK")
             throw new Error(m+m1);
         var soap = require('soap');
-        var url = 'http://ltcservice.laotel.com:5678/Services.asmx?WSDL';
+        var url = 'http://ltcservice.laotel.com:6848/Services.asmx?WSDL';
         var type='3';
         var trans_id=cryptoRandomNumber((Number.MAX_SAFE_INTEGER-281474976710655), Number.MAX_SAFE_INTEGER);
         this.ltcEncrypt(type+phone+value+ltcUser+trans_id).then(function(body){
@@ -92,7 +92,7 @@ module.exports = function (__secret='',__user='') {
         }).catch(function(err){
             console.log(err);
             deferred.reject(err);
-        }).done();
+        });
         return defered.promise;
       }
       module.sendSMSLTC=function(phone,message,header){
@@ -101,7 +101,7 @@ module.exports = function (__secret='',__user='') {
         if(m!="OK")
             throw new Error(m);
         var soap = require('soap');
-        var url = 'http://ltcservice.laotel.com:5678/Services.asmx?WSDL';
+        var url = 'http://ltcservice.laotel.com:6848/Services.asmx?WSDL';
         var type='3';
         var trans_id=cryptoRandomNumber((Number.MAX_SAFE_INTEGER-281474976710655), Number.MAX_SAFE_INTEGER);
         this.ltcEncrypt(phone+message+ltcUser+header).then(function(body){
@@ -116,7 +116,7 @@ module.exports = function (__secret='',__user='') {
         }).catch(function(err){
             console.log(err);
             deferred.reject(err);
-        }).done();
+        });
         return deferred.promise;
       }
       module.queryDetailsLTC=function(startdate,enddate){
@@ -124,7 +124,7 @@ module.exports = function (__secret='',__user='') {
         if(validateTime(startdate)!="OK"||validateTime(enddate)!=='OK')
             throw new Error('Invalid Time');
         var soap = require('soap');
-        var url = 'http://ltcservice.laotel.com:5678/Services.asmx?WSDL';
+        var url = 'http://ltcservice.laotel.com:6848/Services.asmx?WSDL';
         var type='3';
         
         this.ltcEncrypt(type+ltcUser).then(function(body){
@@ -139,14 +139,14 @@ module.exports = function (__secret='',__user='') {
         }).catch(function(err){
             console.log(err);
             deferred.reject(err);
-        }).done();
+        });
         return deferred.promise;
       }
     
       module.checkBalanceCenterLTC=function(){
         var deferred=Q.defer();
         var soap = require('soap');
-        var url = 'http://ltcservice.laotel.com:5678/Services.asmx?WSDL';
+        var url = 'http://ltcservice.laotel.com:6848/Services.asmx?WSDL';
         this.ltcEncrypt(ltcUser).then(function(body){
             var args = {user_id:ltcUser,key:body};
             soap.createClient(url, function(err, client) {
@@ -159,7 +159,7 @@ module.exports = function (__secret='',__user='') {
         }).catch(function(err){
             console.log(err);
             deferred.reject(err);
-        }).done();
+        });
         return deferred.promise;
       }
       module.checkBalanceLTC=function(phone){
@@ -168,7 +168,7 @@ module.exports = function (__secret='',__user='') {
         if(m!="OK")
             throw new Error(m);
         var soap = require('soap');
-        var url = 'http://ltcservice.laotel.com:5678/Services.asmx?WSDL';
+        var url = 'http://ltcservice.laotel.com:6848/Services.asmx?WSDL';
         var type='3';
         this.ltcEncrypt(type+phone+ltcUser).then(function(body){
             var args = {type:type,msisdn:phone,user_id:ltcUser,key:body};
@@ -182,7 +182,7 @@ module.exports = function (__secret='',__user='') {
         }).catch(function(err){
             console.log(err);
             deferred.reject(err);
-        }).done();
+        });
         return deferred.promise;
     }
     function validateTime(time){
