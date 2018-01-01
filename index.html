@@ -314,7 +314,7 @@ $(document).ready(function() {
                                 str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
                                // $("#directresultignore").prepend(str);
                                 str="<div class='row' id='directresultignoreindex"+(index+1)+"'>"+str+"</div>";
-                                if(!index||$("#directresultignoreindex"+index)==undefined)
+                                if(!index||$("#directresultignoreindex"+index).length)
                                     $("#directresultignore").prepend(str);
                                 else
                                     $("#directresultignoreindex"+index).insertBefore(str);
@@ -328,7 +328,7 @@ $(document).ready(function() {
                                 str+='<div class="col-sm-2 small">'+topup.description+'</div>';
                                 str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
                                 str="<div class='row' id='directresultindex"+(index+1)+"'>"+str+"</div>";
-                                if(!index||!$("#directresultindex"+index))
+                                if(!index||!$("#directresultindex"+index).length)
                                     $("#directresult").prepend(str);
                                 else
                                 $("#directresultindex"+index).insertBefore(str);
@@ -354,7 +354,7 @@ $(document).ready(function() {
                                 str+='<div class="col-sm-2 small">undefined or empty or length is not 10</div>';
                                 //$("#directresult").prepend(str);
                                 str="<div class='row' id='directresulterrorindex"+(index+1)+"'>"+str+"</div>";
-                                if(!index||!$("#directresulterrorindex"+index))
+                                if(!index||!$("#directresulterrorindex"+index).length)
                                     $("#directresulterror").prepend(str);
                                 else
                                 $("#directresulterrorindex"+index).insertBefore(str);
