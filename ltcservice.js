@@ -250,6 +250,7 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                     imei: target,
                     owner: owner,
                     lastbalance: res.CheckBalanceResult.balance,
+                    currentbalance: res.CheckBalanceResult.balance,
                     info: res,
                     updatedtime: convertTZ(new Date()),
                     description:'checking balance OK',
