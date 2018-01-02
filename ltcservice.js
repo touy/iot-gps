@@ -253,11 +253,11 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
                     currentbalance: res.CheckBalanceResult.balance,
                     info: res,
                     updatedtime: convertTZ(new Date()),
-                    description:'checking balance OK',
+                    description:'checking balance',
                     gui: uuidV4()
                 }
                 if (res.CheckBalanceResult.resultCode == '20') {
-                    b.description='checking balance OK';
+                    b.description='checking balance';
                 } else {
                     b.description='error checking balance';
                 }
