@@ -632,6 +632,19 @@ app.all('/show_center_balance',(req,res)=>{
     });
     
 });
+app.all('/check_phone_balance',(req,res)=>{
+    var js={};
+    js.client=req.body;
+    js.resp=res;
+    ltc.checkPhoneBalance(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+        js.client.data.message='OK';
+        js.client.data.phonebalance=res;
+        js.resp.send(js.client);
+    }).catch((err)=>{
+        js.client.data.message=err;
+        js.resp.send(js.client);
+    });
+});
 app.all('/show_phone_balance',(req,res)=>{
     var js={};
     js.client=req.body;

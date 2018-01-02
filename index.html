@@ -267,6 +267,75 @@ $(document).ready(function() {
             jsonPost("/check_center_balance",client,cb); 
         }
     }
+    $("#bphonebalance").click(function(){
+        $("#directresult").empty().show();    
+    
+        var url="/check_phone_balance";
+        var phones=$("#directphone").val();
+        phones=phones.split('\n');
+        console.log(phones.length);
+        checkCenterBalance("");
+        
+        for (let index = 0; index < phones.length; index++) {
+            let element = phones[index];
+            if(element=='') continue;
+            let client={};
+            client.data={};
+            client.data.phone=element;
+            if(element!=undefined&&element!=''){
+                jsonPost(url,client,function(res){
+                const topup=res.data.phonebalance;
+                let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
+                str+='<div class="col-sm-3 small">'+element+'</div>';
+                str+='<div class="col-sm-2 small">'+topup.lastbalance+'</div>';
+                str+='<div class="col-sm-2 small">'+topup.currentbalance+'</div>';
+                str+='<div class="col-sm-2 small">'+topup.description+'</div>';
+                str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
+                    if(topup.description.indexOf('ignore')>-1){                                
+                        // $("#directresultignore").prepend(str);
+                        str="<div class='row' id='directresultignoreindex"+(index+1)+"'>"+str+"</div>";
+                        if(!index||$("#directresultignoreindex"+index).length||1)
+                            $("#directresultignore").prepend(str);
+                        else
+                            $("#directresultignoreindex"+index).insertBefore(str);
+                        //console.log('inserted '+index +" "+$("#directresultignoreindex"+index).length);
+                    }   
+                    else if(topup.description.indexOf('error')>-1){
+                        str="<div class='row' id='directresulterrorindex"+(index+1)+"'>"+str+"</div>";
+                        if(!index||$("#directresultignoreindex"+index).length||1)
+                            $("#directresulterror").prepend(str);
+                        else
+                            $("#directresulterrorindex"+index).insertBefore(str);
+                    }
+                    else{
+                        str="<div class='row' id='directresultindex"+(index+1)+"'>"+str+"</div>";
+                        if(!index||!$("#directresultindex"+index).length||1)
+                            $("#directresult").prepend(str);
+                        else
+                        $("#directresultindex"+index).insertBefore(str);
+                        // $("#directresult").after() (str);
+                        
+                    }                         
+                });                          
+            }   
+            else{                
+                let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
+                str+='<div class="col-sm-3 small"></div>';
+                str+='<div class="col-sm-2 small"></div>';
+                str+='<div class="col-sm-2 small"></div>';
+                str+='<div class="col-sm-2 small"></div>';
+                str+='<div class="col-sm-2 small">undefined or empty or length is not 10</div>';
+                //$("#directresult").prepend(str);
+                str="<div class='row' id='directresulterrorindex"+(index+1)+"'>"+str+"</div>";
+                if(!index||!$("#directresulterrorindex"+index).length||1)
+                    $("#directresulterror").prepend(str);
+                else
+                $("#directresulterrorindex"+index).insertBefore(str);
+                
+            }         
+        }
+    });
+    
     $("#bdirectopup").click(function(){    
         $("#directresult").empty().show();    
         $("#directresulterror").empty().show();
@@ -467,6 +536,7 @@ $(document).ready(function() {
                 <label for="topupvalue">value</label>
                 <input type='text' id='topupvalue' />
                 <button id="bdirectopup">Confirm</button>
+                <button id="bphonebalance">Check balance</button>
                 <div class="container">
                     <div class="row">
                         <div class="col-sm-4" style="background-color:beige;">

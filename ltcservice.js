@@ -244,26 +244,28 @@ module.exports = function (__secret = '', __user = '', __minvalue = 5000) {
         var db = create_db('phonebalance');
         try {
             ltc.checkBalanceLTC(phone).then((res) => {
-                if (res.CheckBalanceResult.resultCode == '20') {
-                    var b = {
-                        phone: phone,
-                        topupvalue: 0,
-                        imei: target,
-                        owner: owner,
-                        lastbalance: res.CheckBalanceResult.balance,
-                        info: res,
-                        updatedtime: convertTZ(new Date()),
-                        gui: uuidV4()
-                    }
-                    db.insert(b, b.gui, (err, res) => {
-                        if (err) deferred.reject(err);
-                        else {
-                            deferred.resolve(b);
-                        }
-                    });
-                } else {
-                    throw new Error(JSON.stringify(res));
+                var b = {
+                    phone: phone,
+                    topupvalue: 0,
+                    imei: target,
+                    owner: owner,
+                    lastbalance: res.CheckBalanceResult.balance,
+                    info: res,
+                    updatedtime: convertTZ(new Date()),
+                    description:'checking balance OK',
+                    gui: uuidV4()
                 }
+                if (res.CheckBalanceResult.resultCode == '20') {
+                    b.description='checking balance OK';
+                } else {
+                    b.description='error checking balance';
+                }
+                db.insert(b, b.gui, (err, res) => {
+                    if (err) deferred.reject(err);
+                    else {
+                        deferred.resolve(b);
+                    }
+                });
             }).catch((err) => {
                 deferred.reject(err);
             });
