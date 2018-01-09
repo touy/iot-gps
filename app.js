@@ -214,7 +214,7 @@ var __cur_client = {};
 function convertTZ(fromTZ) {
   return moment.tz(fromTZ, "Asia/Vientiane").format();
 }
-var ltc = require("./ltcservice")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=', 'ITCENTER',5000);
+var ltc = require("./ltcservice")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=', 'ITCENTER',0);
 //var ltc = require("./ltcservice")('kP0SwtIzUA1pLBwsnZz3VA==', 'THEFRIEND',5000);
 
 app.all('/',(req,res)=>{
@@ -685,6 +685,19 @@ app.all('/topup_target',(req,res)=>{
     js.resp=res;
     ltc.topupTarget(js.client.data.phone, js.client.data.topupvalue, js.client.data.imei, js.client.data.owner).then((res)=>{
         js.client.data.topup=res;
+        js.client.data.message='OK';
+        js.resp.send(js.client);
+    }).catch((err)=>{
+        js.client.data.message=err;
+        js.resp.send(js.client);
+    });
+});
+app.all('/send_sms',(req,res)=>{
+    var js={};
+    js.client=req.body;
+    js.resp=res;
+    ltc.sendSMS(js.client.data.phone,js.client.data.message,js.client.data.header).then((res)=>{
+        js.client.data.sms=res;
         js.client.data.message='OK';
         js.resp.send(js.client);
     }).catch((err)=>{
