@@ -20,6 +20,7 @@
         <script src="public/js/jquery-1.12.4.min.js"></script>
         <script src="public/js/jquery-ui-1.12.1/jquery-ui-1.12.1/jquery-ui.min.js"></script>
         <script src="public/js/bootstrap-datetimepicker-master/js/bootstrap-datetimepicker.min.js"></script>
+        <script src='public/js/jquery.number.min.js'></script>
         <script>
 function CSVToArray(strData, strDelimiter) {
     // Check to see if the delimiter is defined. If not,
@@ -252,7 +253,7 @@ $(document).ready(function() {
         tabshows('tdirecttopup');
     });
     function updateCenterBalance(b){
-        $("#centerbalance").text(b);
+        $("#centerbalance").text(b).number(true,2);
     }
     function checkCenterBalance(cb){
         //console.log('not call balck '+cb);
@@ -260,7 +261,7 @@ $(document).ready(function() {
         client.data={};
         if(!cb){         
             jsonPost("/check_center_balance",client,(res)=>{            
-            updateCenterBalance(res.data.centerbalance.lastbalance);
+            updateCenterBalance( parseFloat( res.data.centerbalance.lastbalance));
         });
         }        
         else{
@@ -275,16 +276,19 @@ $(document).ready(function() {
         phones=phones.split('\n');
         console.log(phones.length);
         checkCenterBalance("");
-        
+        var sumCurrent=0;
         for (let index = 0; index < phones.length; index++) {
             let element = phones[index];
             if(element=='') continue;
             let client={};
             client.data={};
             client.data.phone=element;
+
             if(element!=undefined&&element!=''){
                 jsonPost(url,client,function(res){
                 const topup=res.data.phonebalance;
+                sumCurrent+=parseFloat(topup.currentbalance);
+                $('#sum').text(sumCurrent).number(true,2)
                 let str='<div class="col-sm-1 small">'+(index+1)+'</div>';
                 str+='<div class="col-sm-3 small">'+element+'</div>';
                 str+='<div class="col-sm-2 small">'+topup.lastbalance+'</div>';
@@ -450,6 +454,7 @@ $(document).ready(function() {
             <button id='btopup'>top up</button>
             <button id='bdirecttopup'>direct topup</button>
         </div>
+        sum:<div id='sum'></div>
         <div id='tabs'>            
         <div id='trefilllist'>
             <label for="tags">Search:</label><input type="text" id="tags"/>

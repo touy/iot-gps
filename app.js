@@ -198,7 +198,7 @@ function init_db(dbname, design) {
     //db = nano.use(dbname);
     //return db;
   }
-init_db('refillnumbers', __design_refillnumbers);
+//init_db('refillnumbers', __design_refillnumbers);
 // init_db('successlist', __design_event_list);
 // init_db('failedlist', __design_event_list);
 // init_db('retrylist', __design_event_list);
@@ -637,48 +637,149 @@ app.all('/check_phone_balance',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
-    ltc.checkPhoneBalance(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
-        js.client.data.message='OK';
-        js.client.data.phonebalance=res;
-        js.resp.send(js.client);
-    }).catch((err)=>{
-        js.client.data.message=err;
-        js.resp.send(js.client);
-    });
+    if(js.client.data.phonetype=='3')
+        ltc.checkPhoneBalance(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            js.client.data.message='OK';
+            js.client.data.phonebalance=res;
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    else if(js.client.data.phonetype=='2')
+        ltc.checkPhoneBalanceInternet(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            js.client.data.message='OK';
+            js.client.data.phonebalance=res;
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    else if(js.client.data.phonetype=='1')
+        ltc.checkPhoneBalancePSTN(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            js.client.data.message='OK';
+            js.client.data.phonebalance=res;
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    else if(js.client.data.phonetype=='0')
+        ltc.checkPhoneBalancePOSTPAID(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            js.client.data.message='OK';
+            js.client.data.phonebalance=res;
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
 });
 app.all('/show_phone_balance',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
-    ltc.checkPhoneBalance(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
-        ltc.viewPhoneBalance(js.client.data.phone,js.client.data.startime,js.client.data.endtime,page,maxpage).the(res=>{
-            js.client.data.message='OK';
-            js.client.data.phonebalance=res;
+    if(js.client.data.phonetype=='3')
+        ltc.checkPhoneBalance(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            ltc.viewPhoneBalance(js.client.data.phone,js.client.data.startime,js.client.data.endtime,page,maxpage).the(res=>{
+                js.client.data.message='OK';
+                js.client.data.phonebalance=res;
+                js.resp.send(js.client);
+            }).catch(err=>{
+                throw err;
+            });
+        }).catch((err)=>{
+            js.client.data.message=err;
             js.resp.send(js.client);
-        }).catch(err=>{
-            throw err;
         });
-
-    }).catch((err)=>{
-        js.client.data.message=err;
-        js.resp.send(js.client);
-    });
+    if(js.client.data.phonetype=='2')
+        ltc.checkPhoneBalanceInternet(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            ltc.viewPhoneBalanceInternet(js.client.data.phone,js.client.data.startime,js.client.data.endtime,page,maxpage).the(res=>{
+                js.client.data.message='OK';
+                js.client.data.phonebalance=res;
+                js.resp.send(js.client);
+            }).catch(err=>{
+                throw err;
+            });
+        }).catch((err)=>{
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    if(js.client.data.phonetype=='1')
+        ltc.checkPhoneBalancePSTN(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            ltc.viewPhoneBalancePSTN(js.client.data.phone,js.client.data.startime,js.client.data.endtime,page,maxpage).the(res=>{
+                js.client.data.message='OK';
+                js.client.data.phonebalance=res;
+                js.resp.send(js.client);
+            }).catch(err=>{
+                throw err;
+            });
+        }).catch((err)=>{
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    if(js.client.data.phonetype=='0')
+        ltc.checkPhoneBalancePOSTPAID(js.client.data.phone,js.client.data.imei,js.client.data.user).then((res)=>{
+            ltc.viewPhoneBalancePOSTPAID(js.client.data.phone,js.client.data.startime,js.client.data.endtime,page,maxpage).the(res=>{
+                js.client.data.message='OK';
+                js.client.data.phonebalance=res;
+                js.resp.send(js.client);
+            }).catch(err=>{
+                throw err;
+            });
+        }).catch((err)=>{
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
 });
 app.all('/direct_topup',(req,res)=>{
     var js={};
     js.client=req.body;
     js.resp=res;
     console.log('Here');
-    ltc.directTopup(js.client.data.phone,js.client.data.topupvalue).then((res)=>{
-        console.log(res);
-        js.client.data.topup=res;
-        js.client.data.message='OK';
-        js.resp.send(js.client);
-    }).catch((err)=>{
-        console.log(err);
-        js.client.data.message=err;
-        js.resp.send(js.client);
-    });
+    if(js.client.data.phonetype=='3')
+        ltc.directTopup(js.client.data.phone,js.client.data.topupvalue,js.client.data.owner).then((res)=>{
+            console.log(res);
+            js.client.data.topup=res;
+            js.client.data.message='OK';
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            console.log(err);
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    else if(js.client.data.phonetype=='2')
+        ltc.directTopupInternet(js.client.data.phone,js.client.data.topupvalue,js.client.data.owner).then((res)=>{
+            console.log(res);
+            js.client.data.topup=res;
+            js.client.data.message='OK';
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            console.log(err);
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    else if(js.client.data.phonetype=='1')
+        ltc.directTopupPSTN(js.client.data.phone,js.client.data.topupvalue,js.client.data.owner).then((res)=>{
+            console.log(res);
+            js.client.data.topup=res;
+            js.client.data.message='OK';
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            console.log(err);
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
+    else if(js.client.data.phonetype=='0')
+        ltc.directTopupPOSTPAID(js.client.data.phone,js.client.data.topupvalue,js.client.data.owner).then((res)=>{
+            console.log(res);
+            js.client.data.topup=res;
+            js.client.data.message='OK';
+            js.resp.send(js.client);
+        }).catch((err)=>{
+            console.log(err);
+            js.client.data.message=err;
+            js.resp.send(js.client);
+        });
 });
 app.all('/topup_target',(req,res)=>{
     var js={};
