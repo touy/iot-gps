@@ -359,7 +359,7 @@ $(document).ready(function() {
             client.data={};
             client.data.topupvalue=5000;
             client.data.phone=element;
-            
+            client.data.keepalive=$('#keepalive').is(":checked");
             if(element!=undefined&&element!=''){
                 //checkCenterBalance((res)=>{
                     //if(res){
@@ -540,6 +540,7 @@ $(document).ready(function() {
                 <textarea id="directphone" style="width:200px;height:200px"></textarea>
                 <label for="topupvalue">value</label>
                 <input type='text' id='topupvalue' />
+                <label for="keepalive">keep alive</label><input type="checkbox" id="keepalive"></div>
                 <button id="bdirectopup">Confirm</button>
                 <button id="bphonebalance">Check balance</button>
                 <div class="container">
