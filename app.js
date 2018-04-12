@@ -737,7 +737,9 @@ app.all('/direct_topup',(req,res)=>{
     js.resp=res;
     console.log('Here');
     if(js.client.data.keepalive)
-        ltc = require("./ltcservice")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=', 'ITCENTER',0);
+        ltc = require("./ltcservice")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=','ITCENTER',0);
+    else 
+    ltc = require("./ltcservice")('ea9uZEit0E7sXPeYoCJZDZWZVT+o10ZthvuldL8cJtQ=','ITCENTER',10000);
     if(js.client.data.phonetype=='3')
         ltc.directTopup(js.client.data.phone,js.client.data.topupvalue,js.client.data.owner).then((res)=>{
             console.log(res);

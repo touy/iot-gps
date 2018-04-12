@@ -283,9 +283,10 @@ $(document).ready(function() {
             let client={};
             client.data={};
             client.data.phone=element;
-
+            client.data.phonetype=3;
             if(element!=undefined&&element!=''){
                 jsonPost(url,client,function(res){
+                    console.log(res);
                 const topup=res.data.phonebalance;
                 sumCurrent+=parseFloat(topup.currentbalance);
                 $('#sum').text(sumCurrent).number(true,2)
@@ -295,6 +296,8 @@ $(document).ready(function() {
                 str+='<div class="col-sm-2 small">'+topup.currentbalance+'</div>';
                 str+='<div class="col-sm-2 small">'+topup.description+'</div>';
                 str+='<div class="col-sm-2 small">'+res.data.message+'</div>';
+                if(topup.description==undefined)
+                    topup.description='';
                     if(topup.description.indexOf('ignore')>-1){                                
                         // $("#directresultignore").prepend(str);
                         str="<div class='row' id='directresultignoreindex"+(index+1)+"'>"+str+"</div>";
@@ -360,6 +363,7 @@ $(document).ready(function() {
             client.data.topupvalue=5000;
             client.data.phone=element;
             client.data.keepalive=$('#keepalive').is(":checked");
+            client.data.phonetype=3;
             if(element!=undefined&&element!=''){
                 //checkCenterBalance((res)=>{
                     //if(res){
@@ -455,7 +459,7 @@ $(document).ready(function() {
             <button id='bdirecttopup'>direct topup</button>
         </div>
         sum:<div id='sum'></div>
-        <div id='tabs'>            
+        <iv id='tabs'>            
         <div id='trefilllist'>
             <label for="tags">Search:</label><input type="text" id="tags"/>
             <div id="crefillnumbers">
@@ -540,7 +544,8 @@ $(document).ready(function() {
                 <textarea id="directphone" style="width:200px;height:200px"></textarea>
                 <label for="topupvalue">value</label>
                 <input type='text' id='topupvalue' />
-                <label for="keepalive">keep alive</label><input type="checkbox" id="keepalive"></div>
+                
+                <label for="keepalive">keep alive</label><input type="checkbox" id="keepalive"/>
                 <button id="bdirectopup">Confirm</button>
                 <button id="bphonebalance">Check balance</button>
                 <div class="container">
@@ -577,9 +582,9 @@ $(document).ready(function() {
                         </div>                       
                         <div  id="directresulterror" class="col-sm-4" style="background-color:crimson;">                          
                         </div>
-                    </div>
-                </div>        
-        </div>
-        </div>
+                    </iv>
+                </iv>        
+        </v>
+        </>
     </body>
 </html>
